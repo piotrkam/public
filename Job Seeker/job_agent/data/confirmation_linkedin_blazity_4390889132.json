@@ -1,0 +1,12 @@
+{
+  "submitted": false,
+  "method": "linkedin",
+  "confirmation": null,
+  "blocked_reason": "login_required",
+  "notes": [
+    "LinkedIn login is required to access the job application page",
+    "The page (https://pl.linkedin.com/jobs/view/technical-solutions-engineer-at-blazity-4390889132) displays a Polish login screen",
+    "No credentials were available in the application context to authenticate",
+    "To proceed, the candidate must be logged into LinkedIn before starting the application process"
+  ]
+}

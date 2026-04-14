@@ -1,0 +1,6 @@
+# LLM backend — default: Claude Agent SDK (talks to the Claude Code CLI,
+# no ANTHROPIC_API_KEY needed when using a Claude subscription).
+# To switch to a different LLM, replace this package and update llm_agent.py.
+claude-agent-sdk>=0.1.0
+anyio>=4.0.0
+python-docx>=1.1.0

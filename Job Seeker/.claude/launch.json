@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Job Agent Pipeline",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["job_agent/orchestrator.py"],
+      "port": null
+    }
+  ]
+}

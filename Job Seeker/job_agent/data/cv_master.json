@@ -1,0 +1,117 @@
+{
+  "_instructions": "Master resume in structured format. The Tailor agent reads this and assembles tailored versions per job, selecting relevant experience, skills, and metrics.",
+
+  "personal": {
+    "name": "Piotr Kaminski",
+    "email": "piotrkaminski1@protonmail.com",
+    "phone": "+48 510 934 702",
+    "location": "Krakow, Poland",
+    "linkedin": "https://linkedin.com/in/piotr-kaminski"
+  },
+
+  "summary": "Technical leader with 10+ years driving SaaS platform adoption, API integration, and customer success. Proven ability to build high-performing teams, deliver complex technical solutions, and drive measurable business impact through process optimization and client relationship management.",
+
+  "experience": [
+    {
+      "title": "Lead Solutions Engineer",
+      "company": "Luigi's Box",
+      "location": "Remote",
+      "start": "2025-01",
+      "end": "present",
+      "highlights": [
+        "Led onboarding and integration initiatives for key accounts",
+        "Achieved zero churn rate from integration implementations",
+        "Managed Tier 1 and Tier 2 technical delivery",
+        "Redesigned onboarding processes to improve efficiency and client success rates"
+      ],
+      "tech": ["REST APIs", "API Integration", "SaaS Onboarding", "Technical Mentoring", "Process Optimization"]
+    },
+    {
+      "title": "Technical Account Manager",
+      "company": "Flexiroam",
+      "location": "Remote",
+      "start": "2023-01",
+      "end": "2024-12",
+      "highlights": [
+        "Grew assigned accounts by 25% year-over-year",
+        "Delivered 100% implementation success rate across all B2B migrations",
+        "Developed and maintained REST API integrations for enterprise clients",
+        "Led successful B2B platform migration affecting 50+ accounts"
+      ],
+      "tech": ["REST APIs", "API Integration", "Python", "JSON", "Postman", "JIRA"]
+    },
+    {
+      "title": "Technical Support Engineer",
+      "company": "Rapid",
+      "location": "Remote",
+      "start": "2020-01",
+      "end": "2022-12",
+      "highlights": [
+        "Managed Tier 2 technical support with 89% first-contact satisfaction rate",
+        "Trained and mentored 7 engineers on technical fundamentals and customer communication",
+        "Developed fraud detection mechanisms protecting $300K+ in transactions",
+        "Optimized support workflows, improving operational efficiency by 10-15%",
+        "Reduced mean-time-to-resolution by 20% through process improvements"
+      ],
+      "tech": ["SQL", "Python", "CloudWatch", "Grafana", "VS Code", "JIRA", "Confluence"]
+    }
+  ],
+
+  "skills": {
+    "technical": [
+      "REST APIs",
+      "API Integration",
+      "SaaS Platforms",
+      "Python",
+      "SQL",
+      "JSON"
+    ],
+    "tools": [
+      "Postman",
+      "CloudWatch",
+      "Grafana",
+      "VS Code",
+      "JIRA",
+      "Confluence"
+    ],
+    "soft_skills": [
+      "Team Leadership",
+      "Client Relationship Management",
+      "Technical Mentoring",
+      "Process Optimization",
+      "SaaS Onboarding",
+      "Complex Problem Solving",
+      "Cross-functional Collaboration"
+    ]
+  },
+
+  "languages_spoken": [
+    {"language": "English", "level": "C1/C2 — professional fluency"},
+    {"language": "Polish", "level": "Native"}
+  ],
+
+  "key_metrics": {
+    "growth": [
+      "25% account growth (YoY at Flexiroam)",
+      "100% implementation success rate",
+      "Zero churn rate from integration implementations"
+    ],
+    "quality": [
+      "89% first-contact satisfaction rate",
+      "15% operational efficiency improvement",
+      "20% mean-time-to-resolution reduction"
+    ],
+    "impact": [
+      "$300K+ fraud protection",
+      "7 engineers trained and mentored",
+      "50+ successful B2B migrations"
+    ]
+  },
+
+  "tailoring_notes": {
+    "backend_engineer_emphasis": "Emphasize technical depth in API design, Python/SQL skills, infrastructure knowledge, and problem-solving capability",
+    "platform_engineer_emphasis": "Highlight SaaS architecture expertise, process optimization, infrastructure tooling experience, and mentoring capability",
+    "technical_leader_emphasis": "Focus on team leadership, mentoring, process improvement, and customer success at scale",
+    "solutions_engineer_emphasis": "Emphasize integration expertise, API development, customer collaboration, 100% success rate delivery"
+  }
+}

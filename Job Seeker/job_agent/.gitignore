@@ -1,0 +1,9 @@
+.env
+__pycache__/
+*.pyc
+data/applications.db
+data/jobs_raw.json
+data/resumes/
+data/cover_letters/
+data/analyses/
+logs/

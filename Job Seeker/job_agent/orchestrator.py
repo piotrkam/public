@@ -116,7 +116,7 @@ async def step_scout() -> list[dict]:
 def step_filter(jobs: list[dict]) -> list[dict]:
     new_jobs = tracker.filter_new_jobs(jobs)
     skipped = len(jobs) - len(new_jobs)
-    log.info("Tracker: %d new, %d already applied — skipping", len(new_jobs), skipped)
+    log.info("Tracker: %d new, %d already reviewed — skipping", len(new_jobs), skipped)
     return new_jobs[:config.MAX_JOBS_PER_RUN]
 
 
@@ -388,6 +388,22 @@ async def orchestrate() -> None:
         print(f"  {i:<3} {score:<7} {label:<14} {title[:37]:<38} {url}")
 
     print(f"{'═' * W}\n")
+
+    # ── Resume: pick up analysed jobs from interrupted previous runs ──
+    current_ids = {r["job"]["job_id"] for r in analysed}
+    for job in tracker.get_analysed_jobs():
+        if job["job_id"] in current_ids:
+            continue  # already in this run's list
+        analysis_file = config.ANALYSES_DIR / f"analysis_{job['job_id']}.json"
+        if not analysis_file.exists():
+            log.warning("  Resume: no analysis file for %s — re-queueing as new", job["job_id"])
+            tracker.update_job_status(job["job_id"], "new")
+            continue
+        analysis = json.loads(analysis_file.read_text(encoding="utf-8"))
+        score = analysis.get("relevance_score", 0)
+        log.info("  Resume: carrying forward analysed job %s @ %s (score %d)",
+                 job["title"], job["company"], score)
+        analysed.insert(0, {"job": job, "analysis": analysis, "score": score, "outcome": "passed"})
 
     if not analysed:
         log.info("No jobs passed analysis. Exiting.")

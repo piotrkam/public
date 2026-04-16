@@ -30,7 +30,11 @@ TARGET_ROLES = [
     "Business Solution Architect",
     "Integration Engineer",
     "Technical Consultant",
-    "Customer Success Engineer"
+    "Customer Success Engineer",
+    "Integration Consultant",
+    "Technical Integration Consultant",
+    "Project Manager",
+    "Technical Project Manager"
     ]
 
 # LinkedIn — generated from TARGET_ROLES so they always stay in sync

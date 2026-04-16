@@ -85,8 +85,18 @@ def is_already_applied(job_id: str) -> bool:
 
 
 def filter_new_jobs(jobs: list[dict]) -> list[dict]:
-    """Return only jobs that have not been applied to yet."""
-    return [j for j in jobs if not is_already_applied(j["job_id"])]
+    """Return only jobs with status 'new' (not yet analysed, skipped, or submitted)."""
+    job_ids = [j["job_id"] for j in jobs]
+    if not job_ids:
+        return []
+    placeholders = ",".join("?" * len(job_ids))
+    with _db() as conn:
+        rows = conn.execute(
+            f"SELECT job_id FROM jobs WHERE job_id IN ({placeholders}) AND status = 'new'",
+            job_ids,
+        ).fetchall()
+    new_ids = {row["job_id"] for row in rows}
+    return [j for j in jobs if j["job_id"] in new_ids]
 
 
 def upsert_job(job: dict) -> None:
@@ -161,6 +171,15 @@ def log_error(job_id: str, error: str) -> None:
             "INSERT INTO applications (job_id, submitted_date, notes, outcome) VALUES (?, ?, ?, 'pending')",
             (job_id, date.today().isoformat(), f"ERROR: {error}"),
         )
+
+
+def get_analysed_jobs() -> list[dict]:
+    """Return all jobs with status 'analysed' — passed analysis but not yet reviewed by user."""
+    with _db() as conn:
+        rows = conn.execute(
+            "SELECT * FROM jobs WHERE status = 'analysed' ORDER BY relevance_score DESC"
+        ).fetchall()
+    return [dict(row) for row in rows]
 
 
 def get_run_stats() -> dict:

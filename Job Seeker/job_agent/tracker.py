@@ -231,3 +231,27 @@ def get_run_stats() -> dict:
             "errors":        errors,
         },
     }
+
+
+def reset_jobs(job_ids: list[str]) -> int:
+    """Reset the given jobs back to 'new' so they are re-analysed.
+
+    Only resets jobs that have been reviewed/skipped but NOT submitted —
+    submitted applications are never touched.
+
+    Returns the number of rows updated.
+    """
+    if not job_ids:
+        return 0
+    placeholders = ",".join("?" * len(job_ids))
+    with _db() as conn:
+        cursor = conn.execute(
+            f"""
+            UPDATE jobs
+               SET status = 'new', relevance_score = NULL
+             WHERE job_id IN ({placeholders})
+               AND status NOT IN ('submitted')
+            """,
+            job_ids,
+        )
+        return cursor.rowcount

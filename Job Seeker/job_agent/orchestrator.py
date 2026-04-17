@@ -120,6 +120,54 @@ def step_filter(jobs: list[dict]) -> list[dict]:
     return new_jobs[:config.MAX_JOBS_PER_RUN]
 
 
+# ── Step 2b: Ask user how to proceed when previous results exist ───────────────
+
+def step_confirm_mode(all_jobs: list[dict], new_jobs: list[dict]) -> list[dict]:
+    """If previous-run jobs exist, ask whether to continue or start fresh.
+
+    Returns the final list of jobs to analyse in Phase 1.
+
+    Options presented to the user:
+      c — continue  : analyse only the new/unreviewed jobs (default)
+      r — restart   : reset ALL previously-reviewed jobs and re-analyse everything
+      q — quit
+    """
+    already_reviewed = len(all_jobs) - len(new_jobs)
+    if already_reviewed == 0:
+        # First-ever run or clean slate — nothing to decide
+        return new_jobs
+
+    W = 60
+    print()
+    print(f"╔{'═' * W}╗")
+    print(f"║  {'PREVIOUS RUN DETECTED':<{W - 2}}  ║")
+    print(f"╠{'═' * W}╣")
+    print(f"║  {'Jobs found this scan:':<30}{len(all_jobs):<{W - 32}}  ║")
+    print(f"║  {'Already reviewed / submitted:':<30}{already_reviewed:<{W - 32}}  ║")
+    print(f"║  {'New / not yet analysed:':<30}{len(new_jobs):<{W - 32}}  ║")
+    print(f"╚{'═' * W}╝")
+    print()
+    print("  [c] Continue  — analyse only the new jobs  (default)")
+    print("  [r] Restart   — reset previous results and re-analyse everything")
+    print("  [q] Quit")
+    print()
+
+    while True:
+        answer = input("How would you like to proceed? [c / r / q]: ").strip().lower()
+        if answer in ("", "c"):
+            log.info("Mode: continue — %d new jobs to analyse", len(new_jobs))
+            return new_jobs
+        if answer == "r":
+            ids_to_reset = [j["job_id"] for j in all_jobs]
+            reset_count = tracker.reset_jobs(ids_to_reset)
+            log.info("Mode: restart — reset %d jobs to 'new'", reset_count)
+            # After reset all jobs are 'new', so re-run the filter to get a
+            # clean, capped list in the right order.
+            return tracker.filter_new_jobs(all_jobs)[:config.MAX_JOBS_PER_RUN]
+        if answer == "q":
+            raise SystemExit("Session ended by user.")
+
+
 # ── Step 3: Analyst ────────────────────────────────────────────────────────────
 
 async def step_analyse(job: dict) -> dict:
@@ -329,8 +377,11 @@ async def orchestrate() -> None:
 
     # ── 2. Filter duplicates ───────────────────────────────────
     new_jobs = step_filter(jobs)
+
+    # ── 2b. Ask user: continue with new jobs or restart? ──────
+    new_jobs = step_confirm_mode(jobs, new_jobs)
     if not new_jobs:
-        log.info("No new jobs after deduplication. Exiting.")
+        log.info("No jobs to analyse. Exiting.")
         return
 
     # ── Phase 1: Analyse ALL jobs unattended ──────────────────

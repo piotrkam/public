@@ -116,7 +116,7 @@ async def step_scout() -> list[dict]:
 def step_filter(jobs: list[dict]) -> list[dict]:
     new_jobs = tracker.filter_new_jobs(jobs)
     skipped = len(jobs) - len(new_jobs)
-    log.info("Tracker: %d new, %d already reviewed — skipping", len(new_jobs), skipped)
+    log.info("Tracker: %d to analyse, %d already reviewed/submitted — skipping", len(new_jobs), skipped)
     return new_jobs[:config.MAX_JOBS_PER_RUN]
 
 

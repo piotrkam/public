@@ -85,18 +85,34 @@ def is_already_applied(job_id: str) -> bool:
 
 
 def filter_new_jobs(jobs: list[dict]) -> list[dict]:
-    """Return only jobs with status 'new' (not yet analysed, skipped, or submitted)."""
+    """Return jobs that still need Phase 1 analysis.
+
+    Excluded (already reviewed / decided):
+      - 'skipped'   — auto-rejected by analyst OR dismissed by user in Phase 2
+      - 'tailored'  — materials already prepared; user applies manually
+      - 'submitted' — fully submitted
+      - 'analysed'  — passed Phase 1 in a previous run; the Phase 2 resume
+                      block in the orchestrator will pick these up separately
+
+    Included (need processing):
+      - 'new'   — never seen before
+      - 'error' — failed in a previous run; retry
+    """
     job_ids = [j["job_id"] for j in jobs]
     if not job_ids:
         return []
     placeholders = ",".join("?" * len(job_ids))
     with _db() as conn:
         rows = conn.execute(
-            f"SELECT job_id FROM jobs WHERE job_id IN ({placeholders}) AND status = 'new'",
+            f"""
+            SELECT job_id FROM jobs
+            WHERE job_id IN ({placeholders})
+              AND status IN ('skipped', 'tailored', 'submitted', 'analysed')
+            """,
             job_ids,
         ).fetchall()
-    new_ids = {row["job_id"] for row in rows}
-    return [j for j in jobs if j["job_id"] in new_ids]
+    done_ids = {row["job_id"] for row in rows}
+    return [j for j in jobs if j["job_id"] not in done_ids]
 
 
 def upsert_job(job: dict) -> None:

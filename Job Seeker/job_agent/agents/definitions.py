@@ -255,34 +255,74 @@ Save the following JSON to the provided output file path. Return ONLY valid JSON
 # ── Tailor ─────────────────────────────────────────────────────────────────────
 
 TAILOR = AgentDefinition(
-    description="Creates a tailored resume and cover letter for a specific job posting.",
+    description="Creates tailored application content (JSON) for a specific job posting. The orchestrator converts it to DOCX.",
     prompt="""
 You are an expert technical resume writer with deep knowledge of IT hiring.
 
-Given a master resume (JSON) and a job analysis (JSON), your job is to:
+Given a master resume (JSON) and a job analysis (JSON), write a single JSON file to
+the provided output path. The orchestrator will convert it into DOCX files locally.
 
-1. TAILORED RESUME (save as DOCX):
-   - Reorder bullet points to lead with the most relevant achievements
-   - Mirror ATS keywords from the job analysis exactly — do not paraphrase
-   - Emphasise tech stack items that overlap with the job requirements
-   - Keep bullet points achievement-focused: "[Action] [metric/result]"
-   - Remove or deprioritise irrelevant experience
-   - Keep to 2 pages maximum
+## Output: one JSON file at the provided path
 
-2. COVER LETTER (save as DOCX, max 300 words):
-   - Opening: one specific reason why this company/role (not generic)
-   - Middle: two concrete achievements directly relevant to their needs
-   - Closing: clear call to action
-   - Tone: confident and direct, not sycophantic
+```json
+{
+  "resume": {
+    "name": "Candidate full name",
+    "contact": "email | phone | location | linkedin_url",
+    "summary": "One tailored paragraph positioning statement.",
+    "experience": [
+      {
+        "title": "Job title",
+        "company": "Company name",
+        "period": "YYYY - YYYY",
+        "bullets": [
+          { "label": "Short bold label", "text": "Rest of the achievement sentence with metric/result." },
+          { "label": "Another label",    "text": "..." }
+        ]
+      }
+    ],
+    "skills": [
+      { "category": "Technical", "items": "REST APIs, Python, SQL" },
+      { "category": "Soft",      "items": "Communication, Problem-Solving" },
+      { "category": "Tools",     "items": "Postman, JIRA, Confluence" }
+    ],
+    "additional": [
+      { "label": "Languages", "text": "English (C1), Polish (native)" }
+    ]
+  },
+  "cover_letter": {
+    "recipient_name": "Hiring Manager or specific name if known",
+    "recipient_company": "Company name",
+    "paragraphs": [
+      "Opening: one specific reason this company/role — not generic.",
+      "Achievement 1: concrete result directly relevant to their needs.",
+      "Achievement 2: concrete result directly relevant to their needs.",
+      "Closing: clear call to action."
+    ]
+  },
+  "notes": {
+    "what_was_emphasised": [],
+    "ats_keywords_used": [],
+    "sections_reordered": true,
+    "cover_letter_angle": "One sentence describing the angle taken."
+  }
+}
+```
 
-3. APPLICATION NOTES (save as JSON):
-   - what_was_emphasised: string[]
-   - ats_keywords_used: string[]
-   - sections_reordered: boolean
-   - cover_letter_angle: string
+## Resume rules
+- Reorder bullets to lead with the most relevant achievements for this role
+- Mirror ATS keywords from the job analysis exactly — do not paraphrase
+- Keep bullets achievement-focused: "[Action verb] [metric/result]"
+- Do not invent experience or skills not present in the master resume
+- Cover letter max 300 words total across all paragraphs
 
-Do not invent experience or skills not present in the master resume.
-Save all three files to the provided paths. Return a brief confirmation.
+## Cover letter rules
+- Opening: one specific reason why this company/role — not generic
+- Two body paragraphs: concrete achievements directly relevant to their needs
+- Closing: clear call to action
+- Tone: confident and direct, not sycophantic
+
+Save the JSON to the provided output path. Return a brief confirmation.
 """,
     tools=["Read", "Write"],
 )

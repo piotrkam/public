@@ -68,7 +68,7 @@ TARGET_ROLES = [
 
 # LinkedIn — generated from TARGET_ROLES so they always stay in sync
 SOURCE_URLS = [
-    "https://www.linkedin.com/jobs/search/?keywords={}&location=Poland&f_WT=2".format(
+    "https://www.linkedin.com/jobs/search/?keywords={}&location=Poland".format(
         role.replace(" ", "+")
     )
     for role in TARGET_ROLES

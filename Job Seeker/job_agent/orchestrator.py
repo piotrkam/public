@@ -22,6 +22,7 @@ from llm_agent import query, AgentOptions as ClaudeAgentOptions, ResultMessage
 
 import config
 import tracker
+import docx_builder
 from agents import SCOUT, ANALYST, TAILOR
 
 # ── Logging ────────────────────────────────────────────────────────────────────
@@ -236,14 +237,16 @@ async def step_tailor(data: dict) -> dict:
     job = data["job"]
     job_id = job["job_id"]
 
-    cv_file     = config.RESUMES_DIR   / f"cv_{job_id}.docx"
-    letter_file = config.LETTERS_DIR   / f"letter_{job_id}.docx"
-    notes_file  = config.ANALYSES_DIR  / f"notes_{job_id}.json"
+    # Stage 1: agent writes structured content JSON (plain text — it cannot create binary files)
+    content_file = config.ANALYSES_DIR / f"content_{job_id}.json"
+    notes_file   = config.ANALYSES_DIR / f"notes_{job_id}.json"
+    cv_file      = config.RESUMES_DIR  / f"cv_{job_id}.docx"
+    letter_file  = config.LETTERS_DIR  / f"letter_{job_id}.docx"
 
     await run_agent(
         TAILOR,
         prompt=f"""
-        Create tailored application materials for this job:
+        Create tailored application content for this job:
 
         Company:   {job['company']}
         Title:     {job['title']}
@@ -252,13 +255,32 @@ async def step_tailor(data: dict) -> dict:
         Master resume:  {config.CV_MASTER_PATH}
         Job analysis:   {config.ANALYSES_DIR / f"analysis_{job_id}.json"}
 
-        Save outputs to:
-          - Tailored CV:      {cv_file}
-          - Cover letter:     {letter_file}
-          - Application notes:{notes_file}
+        Save the full JSON output (resume + cover_letter + notes) to: {content_file}
         """,
-        label=f"Tailor — crafting CV for {job['company']}",
+        label=f"Tailor — crafting content for {job['company']}",
     )
+
+    if not content_file.exists():
+        raise RuntimeError(f"Tailor produced no content file for job {job_id}")
+
+    # Stage 2: build the actual DOCX files locally from the agent's JSON
+    log.info("  Building DOCX files from content JSON...")
+    try:
+        docx_builder.build_documents(
+            content_file=content_file,
+            cv_output=cv_file,
+            letter_output=letter_file,
+        )
+    except Exception as exc:
+        raise RuntimeError(f"DOCX build failed for job {job_id}: {exc}") from exc
+
+    # Extract notes into a separate file for consistency with previous runs
+    content = json.loads(content_file.read_text(encoding="utf-8"))
+    if "notes" in content:
+        notes_file.write_text(
+            json.dumps(content["notes"], indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
 
     tracker.update_job_status(job_id, "tailored")
     log.info("  CV:           file://%s", cv_file)

@@ -17,6 +17,7 @@ import hashlib
 import logging
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlparse, urlunparse
 
 from llm_agent import query, AgentOptions as ClaudeAgentOptions, ResultMessage
 
@@ -70,6 +71,24 @@ async def run_agent(
     return result
 
 
+# ── URL normalisation & stable job_id ─────────────────────────────────────────
+
+def normalize_url(url: str) -> str:
+    """Strip tracking/query parameters and fragments, keeping only scheme + host + path.
+
+    LinkedIn:   https://www.linkedin.com/jobs/view/1234567890/?tracking=... → .../view/1234567890/
+    justjoin:   https://justjoin.it/job-offer/company-role?utm_source=...  → .../job-offer/company-role
+    Generic:    any URL — query string and fragment dropped
+    """
+    parsed = urlparse(url)
+    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
+
+
+def stable_job_id(url: str) -> str:
+    """Deterministic job ID derived from the normalised URL."""
+    return hashlib.md5(normalize_url(url).encode()).hexdigest()[:12]
+
+
 # ── Step 1: Scout ──────────────────────────────────────────────────────────────
 
 async def step_scout() -> list[dict]:
@@ -102,10 +121,10 @@ async def step_scout() -> list[dict]:
 
     jobs = json.loads(output_file.read_text(encoding="utf-8"))
 
-    # Ensure stable job_id (hash of URL if agent didn't set one)
+    # Always recompute job_id from the normalised URL — never trust the agent's
+    # value, which varies across runs due to tracking parameters or naming.
     for job in jobs:
-        if not job.get("job_id"):
-            job["job_id"] = hashlib.md5(job["url"].encode()).hexdigest()[:12]
+        job["job_id"] = stable_job_id(job["url"])
         tracker.upsert_job(job)
 
     log.info("Scout found %d listings", len(jobs))
@@ -165,6 +184,44 @@ def step_confirm_mode(all_jobs: list[dict], new_jobs: list[dict]) -> list[dict]:
             # After reset all jobs are 'new', so re-run the filter to get a
             # clean, capped list in the right order.
             return tracker.filter_new_jobs(all_jobs)[:config.MAX_JOBS_PER_RUN]
+        if answer == "q":
+            raise SystemExit("Session ended by user.")
+
+
+# ── Step 0: Startup mode — resume Phase 2 or run full pipeline ────────────────
+
+def step_startup_mode() -> str:
+    """Check for pending analysed jobs and ask the user how to start.
+
+    Returns:
+      "resume" — skip Scout + Phase 1, jump straight to Phase 2
+      "full"   — run the full pipeline (Scout → Phase 1 → Phase 2)
+    """
+    pending = tracker.get_analysed_jobs()
+    if not pending:
+        return "full"
+
+    W = 62
+    print()
+    print(f"╔{'═' * W}╗")
+    print(f"║  {'PENDING JOBS FROM PREVIOUS RUN':<{W - 2}}  ║")
+    print(f"╠{'═' * W}╣")
+    print(f"║  {'Jobs waiting for review / tailoring:':<40}{len(pending):<{W - 42}}  ║")
+    print(f"╚{'═' * W}╝")
+    print()
+    print("  [r] Resume   — go straight to Phase 2 with pending jobs  (default)")
+    print("  [f] Full run — scout + analyse new jobs, then review all")
+    print("  [q] Quit")
+    print()
+
+    while True:
+        answer = input("How would you like to start? [r / f / q]: ").strip().lower()
+        if answer in ("", "r"):
+            log.info("Startup mode: resume — %d pending jobs", len(pending))
+            return "resume"
+        if answer == "f":
+            log.info("Startup mode: full run")
+            return "full"
         if answer == "q":
             raise SystemExit("Session ended by user.")
 
@@ -391,92 +448,114 @@ async def orchestrate() -> None:
     log.info("Targeting: %s", ", ".join(config.TARGET_ROLES))
     log.info("=" * 60)
 
-    # ── 1. Scout ───────────────────────────────────────────────
-    jobs = await step_scout()
-    if not jobs:
-        log.info("No jobs found. Exiting.")
-        return
-
-    # ── 2. Filter duplicates ───────────────────────────────────
-    new_jobs = step_filter(jobs)
-
-    # ── 2b. Ask user: continue with new jobs or restart? ──────
-    new_jobs = step_confirm_mode(jobs, new_jobs)
-    if not new_jobs:
-        log.info("No jobs to analyse. Exiting.")
-        return
-
-    # ── Phase 1: Analyse ALL jobs unattended ──────────────────
-    log.info("=" * 60)
-    log.info("PHASE 1 — Analysing %d jobs (no input needed)", len(new_jobs))
-    log.info("=" * 60)
+    # ── 0. Startup mode — resume Phase 2 or run full pipeline ─
+    startup_mode = step_startup_mode()
 
     all_results = []   # every result dict regardless of outcome
     analysed    = []   # only "passed" results
 
-    for i, job in enumerate(new_jobs, 1):
-        log.info("-" * 50)
-        log.info("[%d/%d] %s @ %s", i, len(new_jobs), job["title"], job["company"])
-        try:
-            result = await step_analyse(job)
-            all_results.append(result)
-            if result["outcome"] == "passed":
-                analysed.append(result)
-            elif result["outcome"] in ("auto_rejected", "low_score"):
-                auto_rejected.append(result["job"])
-            else:
-                errors.append(result["job"])
-        except Exception as exc:
-            log.error("  Analyst error for %s: %s", job.get("title"), exc, exc_info=True)
-            tracker.log_error(job["job_id"], str(exc))
-            errors.append(job)
-            all_results.append({"job": job, "score": 0, "outcome": "error", "reject_reason": str(exc)})
+    if startup_mode == "resume":
+        # ── Resume path: skip Scout + Phase 1, load pending jobs ──
+        for job in tracker.get_analysed_jobs():
+            analysis_file = config.ANALYSES_DIR / f"analysis_{job['job_id']}.json"
+            if not analysis_file.exists():
+                log.warning("  Resume: no analysis file for %s — re-queueing as new", job["job_id"])
+                tracker.update_job_status(job["job_id"], "new")
+                continue
+            analysis = json.loads(analysis_file.read_text(encoding="utf-8"))
+            score = analysis.get("relevance_score", 0)
+            log.info("  Loaded: %s @ %s (score %d)", job["title"], job["company"], score)
+            analysed.append({"job": job, "analysis": analysis, "score": score, "outcome": "passed"})
 
-    # ── Phase 1 summary table ──────────────────────────────────
-    W = 70
-    print(f"\n{'═' * W}")
-    print(f"  PHASE 1 COMPLETE — {len(new_jobs)} scanned | "
-          f"{len(analysed)} passed | "
-          f"{len(auto_rejected)} rejected | "
-          f"{len(errors)} errors")
-    print(f"{'═' * W}")
-    print(f"  {'#':<3} {'Score':<7} {'Status':<14} {'Title + Company':<38} URL")
-    print(f"  {'-'*3} {'-'*6} {'-'*13} {'-'*37} {'-'*20}")
+        jobs = [r["job"] for r in analysed]
 
-    ICONS = {
-        "passed":        "✓",
-        "low_score":     "✗",
-        "auto_rejected": "⊘",
-        "error":         "!",
-    }
+    else:
+        # ── Full run path: Scout → Phase 1 ────────────────────────
 
-    for i, result in enumerate(all_results, 1):
-        job    = result["job"]
-        score  = result.get("score", 0)
-        outcome = result.get("outcome", "error")
-        icon   = ICONS.get(outcome, "?")
-        label  = f"{icon} {outcome.replace('_', ' ')}"
-        title  = f"{job['title']} @ {job['company']}"
-        url    = _link(job["url"], job["url"])
-        print(f"  {i:<3} {score:<7} {label:<14} {title[:37]:<38} {url}")
+        # ── 1. Scout ──────────────────────────────────────────────
+        jobs = await step_scout()
+        if not jobs:
+            log.info("No jobs found. Exiting.")
+            return
 
-    print(f"{'═' * W}\n")
+        # ── 2. Filter duplicates ──────────────────────────────────
+        new_jobs = step_filter(jobs)
 
-    # ── Resume: pick up analysed jobs from interrupted previous runs ──
-    current_ids = {r["job"]["job_id"] for r in analysed}
-    for job in tracker.get_analysed_jobs():
-        if job["job_id"] in current_ids:
-            continue  # already in this run's list
-        analysis_file = config.ANALYSES_DIR / f"analysis_{job['job_id']}.json"
-        if not analysis_file.exists():
-            log.warning("  Resume: no analysis file for %s — re-queueing as new", job["job_id"])
-            tracker.update_job_status(job["job_id"], "new")
-            continue
-        analysis = json.loads(analysis_file.read_text(encoding="utf-8"))
-        score = analysis.get("relevance_score", 0)
-        log.info("  Resume: carrying forward analysed job %s @ %s (score %d)",
-                 job["title"], job["company"], score)
-        analysed.insert(0, {"job": job, "analysis": analysis, "score": score, "outcome": "passed"})
+        # ── 2b. Ask user: continue with new jobs or restart? ──────
+        new_jobs = step_confirm_mode(jobs, new_jobs)
+        if not new_jobs:
+            log.info("No jobs to analyse. Exiting.")
+            return
+
+        # ── Phase 1: Analyse ALL jobs unattended ──────────────────
+        log.info("=" * 60)
+        log.info("PHASE 1 — Analysing %d jobs (no input needed)", len(new_jobs))
+        log.info("=" * 60)
+
+        for i, job in enumerate(new_jobs, 1):
+            log.info("-" * 50)
+            log.info("[%d/%d] %s @ %s", i, len(new_jobs), job["title"], job["company"])
+            try:
+                result = await step_analyse(job)
+                all_results.append(result)
+                if result["outcome"] == "passed":
+                    analysed.append(result)
+                elif result["outcome"] in ("auto_rejected", "low_score"):
+                    auto_rejected.append(result["job"])
+                else:
+                    errors.append(result["job"])
+            except Exception as exc:
+                log.error("  Analyst error for %s: %s", job.get("title"), exc, exc_info=True)
+                tracker.log_error(job["job_id"], str(exc))
+                errors.append(job)
+                all_results.append({"job": job, "score": 0, "outcome": "error", "reject_reason": str(exc)})
+
+        # ── Phase 1 summary table ──────────────────────────────
+        W = 70
+        print(f"\n{'═' * W}")
+        print(f"  PHASE 1 COMPLETE — {len(new_jobs)} scanned | "
+              f"{len(analysed)} passed | "
+              f"{len(auto_rejected)} rejected | "
+              f"{len(errors)} errors")
+        print(f"{'═' * W}")
+        print(f"  {'#':<3} {'Score':<7} {'Status':<14} {'Title + Company':<38} URL")
+        print(f"  {'-'*3} {'-'*6} {'-'*13} {'-'*37} {'-'*20}")
+
+        ICONS = {
+            "passed":        "✓",
+            "low_score":     "✗",
+            "auto_rejected": "⊘",
+            "error":         "!",
+        }
+
+        for i, result in enumerate(all_results, 1):
+            job    = result["job"]
+            score  = result.get("score", 0)
+            outcome = result.get("outcome", "error")
+            icon   = ICONS.get(outcome, "?")
+            label  = f"{icon} {outcome.replace('_', ' ')}"
+            title  = f"{job['title']} @ {job['company']}"
+            url    = _link(job["url"], job["url"])
+            print(f"  {i:<3} {score:<7} {label:<14} {title[:37]:<38} {url}")
+
+        print(f"{'═' * W}\n")
+
+        # ── Merge: add any analysed jobs from previous runs not in this run ──
+        current_ids = {r["job"]["job_id"] for r in analysed}
+        for job in tracker.get_analysed_jobs():
+            if job["job_id"] in current_ids:
+                continue
+            analysis_file = config.ANALYSES_DIR / f"analysis_{job['job_id']}.json"
+            if not analysis_file.exists():
+                log.warning("  Resume: no analysis file for %s — re-queueing as new", job["job_id"])
+                tracker.update_job_status(job["job_id"], "new")
+                continue
+            analysis = json.loads(analysis_file.read_text(encoding="utf-8"))
+            score = analysis.get("relevance_score", 0)
+            log.info("  Carrying forward: %s @ %s (score %d)", job["title"], job["company"], score)
+            analysed.insert(0, {"job": job, "analysis": analysis, "score": score, "outcome": "passed"})
+
+    # ── end of full-run else block ─────────────────────────────
 
     if not analysed:
         log.info("No jobs passed analysis. Exiting.")

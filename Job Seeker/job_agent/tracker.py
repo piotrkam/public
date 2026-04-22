@@ -9,11 +9,9 @@ Responsibilities:
 
 import sqlite3
 import json
-import hashlib
 from datetime import date
 from pathlib import Path
 from contextlib import contextmanager
-from urllib.parse import urlparse, urlunparse
 
 from config import DB_PATH
 
@@ -58,81 +56,6 @@ CREATE INDEX IF NOT EXISTS idx_apps_outcome   ON applications(outcome);
 
 # ── Connection helper ──────────────────────────────────────────────────────────
 
-def _normalize_url(url: str) -> str:
-    """Strip tracking params and fragments — keep only scheme + host + path."""
-    parsed = urlparse(url)
-    return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
-
-
-def _ensure_schema_migrations(conn: sqlite3.Connection) -> None:
-    """Run any pending schema migrations (one-time per database)."""
-    # Migration 1: Add url_normalized column if it doesn't exist, and populate it
-    has_column = False
-    try:
-        conn.execute("SELECT url_normalized FROM jobs LIMIT 1")
-        has_column = True
-    except sqlite3.OperationalError:
-        # Column doesn't exist — add it
-        conn.execute("ALTER TABLE jobs ADD COLUMN url_normalized TEXT")
-
-    # Populate url_normalized for all rows where it's NULL
-    if has_column or True:  # Always populate, whether we just added or it already existed
-        rows = conn.execute("SELECT job_id, url FROM jobs WHERE url_normalized IS NULL").fetchall()
-        for row in rows:
-            normalized = _normalize_url(row["url"])
-            conn.execute(
-                "UPDATE jobs SET url_normalized = ? WHERE job_id = ?",
-                (normalized, row["job_id"]),
-            )
-
-        # Find and consolidate duplicates: for each url_normalized that appears
-        # multiple times, keep the row with the best status (submitted > tailored > analysed > skipped > error > new)
-        # and delete the others.
-        status_rank = {"submitted": 6, "tailored": 5, "analysed": 4, "skipped": 3, "error": 2, "new": 1}
-
-        dups = conn.execute("""
-            SELECT url_normalized, COUNT(*) as cnt
-            FROM jobs
-            WHERE url_normalized IS NOT NULL
-            GROUP BY url_normalized
-            HAVING cnt > 1
-        """).fetchall()
-
-        for dup in dups:
-            url_norm = dup["url_normalized"]
-            rows = conn.execute(
-                "SELECT job_id, status FROM jobs WHERE url_normalized = ?",
-                (url_norm,),
-            ).fetchall()
-
-            # Keep the one with the highest rank, delete the rest
-            if rows:
-                # Sort by status rank (submitted > tailored > analysed > skipped > error > new)
-                sorted_rows = sorted(rows, key=lambda r: status_rank.get(r["status"], 0), reverse=True)
-                keep_id = sorted_rows[0]["job_id"]
-                delete_ids = [r["job_id"] for r in sorted_rows[1:]]
-                if delete_ids:
-                    placeholders = ",".join("?" * len(delete_ids))
-                    conn.execute(
-                        f"DELETE FROM jobs WHERE job_id IN ({placeholders})",
-                        delete_ids,
-                    )
-
-        # Now create the unique index (if it doesn't already exist)
-        try:
-            conn.execute("CREATE UNIQUE INDEX idx_jobs_url_normalized ON jobs(url_normalized) WHERE url_normalized IS NOT NULL")
-        except sqlite3.OperationalError as e:
-            if "already exists" in str(e):
-                pass  # Index already created in a previous run
-            elif "UNIQUE constraint failed" in str(e):
-                # Still have duplicates — log a warning but continue
-                print(f"Warning: Could not create unique index due to remaining duplicates. Upsert logic will handle deduplication.")
-            else:
-                raise
-
-        conn.commit()
-
-
 @contextmanager
 def _db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -141,7 +64,6 @@ def _db():
     conn.execute("PRAGMA journal_mode=WAL")
     try:
         conn.executescript(SCHEMA)
-        _ensure_schema_migrations(conn)
         yield conn
         conn.commit()
     except Exception:
@@ -194,60 +116,29 @@ def filter_new_jobs(jobs: list[dict]) -> list[dict]:
 
 
 def upsert_job(job: dict) -> None:
-    """Insert or update a job record (idempotent).
-
-    Deduplicates by normalized URL, so the same posting is never inserted twice
-    even if it has different job_id values from different runs.
-    """
-    url_normalized = _normalize_url(job["url"])
-
+    """Insert or update a job record (idempotent)."""
     with _db() as conn:
-        # Check if this normalized URL already exists
-        existing = conn.execute(
-            "SELECT job_id FROM jobs WHERE url_normalized = ?",
-            (url_normalized,),
-        ).fetchone()
-
-        if existing:
-            # URL already in DB — update the existing row (keep its job_id)
-            job_id = existing["job_id"]
-            conn.execute(
-                """
-                UPDATE jobs
-                   SET title        = ?,
-                       company      = ?,
-                       location     = ?,
-                       posted_date  = ?
-                 WHERE job_id = ?
-                """,
-                (
-                    job["title"],
-                    job["company"],
-                    job.get("location", ""),
-                    job.get("posted_date", ""),
-                    job_id,
-                ),
-            )
-        else:
-            # New URL — insert with the provided job_id and url_normalized
-            conn.execute(
-                """
-                INSERT INTO jobs
-                    (job_id, title, company, location, url, source, posted_date, found_date, url_normalized)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                (
-                    job["job_id"],
-                    job["title"],
-                    job["company"],
-                    job.get("location", ""),
-                    job["url"],
-                    job.get("source", ""),
-                    job.get("posted_date", ""),
-                    date.today().isoformat(),
-                    url_normalized,
-                ),
-            )
+        conn.execute(
+            """
+            INSERT INTO jobs (job_id, title, company, location, url, source, posted_date, found_date)
+            VALUES (:job_id, :title, :company, :location, :url, :source, :posted_date, :found_date)
+            ON CONFLICT(job_id) DO UPDATE SET
+                title        = excluded.title,
+                company      = excluded.company,
+                location     = excluded.location,
+                posted_date  = excluded.posted_date
+            """,
+            {
+                "job_id":      job["job_id"],
+                "title":       job["title"],
+                "company":     job["company"],
+                "location":    job.get("location", ""),
+                "url":         job["url"],
+                "source":      job.get("source", ""),
+                "posted_date": job.get("posted_date", ""),
+                "found_date":  date.today().isoformat(),
+            },
+        )
 
 
 def update_job_status(job_id: str, status: str, relevance_score: int | None = None) -> None:

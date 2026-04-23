@@ -198,6 +198,21 @@ def get_analysed_jobs() -> list[dict]:
     return [dict(row) for row in rows]
 
 
+def get_pending_work() -> dict:
+    """Return counts of unfinished work from previous runs."""
+    with _db() as conn:
+        errored = conn.execute(
+            "SELECT * FROM jobs WHERE status = 'error' ORDER BY found_date DESC"
+        ).fetchall()
+        analysed = conn.execute(
+            "SELECT * FROM jobs WHERE status = 'analysed' ORDER BY relevance_score DESC"
+        ).fetchall()
+    return {
+        "errored":  [dict(r) for r in errored],
+        "analysed": [dict(r) for r in analysed],
+    }
+
+
 def get_run_stats() -> dict:
     """Return statistics for the current run and all time."""
     today = date.today().isoformat()

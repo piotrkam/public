@@ -188,37 +188,70 @@ def step_confirm_mode(all_jobs: list[dict], new_jobs: list[dict]) -> list[dict]:
             raise SystemExit("Session ended by user.")
 
 
-# ── Step 0: Startup mode — resume Phase 2 or run full pipeline ────────────────
+# ── Step 0: Startup mode — resume / retry errors / full run ───────────────────
 
 def step_startup_mode() -> str:
-    """Check for pending analysed jobs and ask the user how to start.
+    """Check for pending work from previous runs and ask the user how to start.
 
     Returns:
-      "resume" — skip Scout + Phase 1, jump straight to Phase 2
+      "resume" — skip Scout + Phase 1, load analysed jobs and go to Phase 2
+      "retry"  — re-analyse errored jobs (mini Phase 1), then Phase 2 for all
       "full"   — run the full pipeline (Scout → Phase 1 → Phase 2)
     """
-    pending = tracker.get_analysed_jobs()
-    if not pending:
+    pending  = tracker.get_pending_work()
+    analysed = pending["analysed"]
+    errored  = pending["errored"]
+
+    if not analysed and not errored:
         return "full"
 
     W = 62
     print()
     print(f"╔{'═' * W}╗")
-    print(f"║  {'PENDING JOBS FROM PREVIOUS RUN':<{W - 2}}  ║")
+    print(f"║  {'UNFINISHED WORK FROM PREVIOUS RUN':<{W - 2}}  ║")
     print(f"╠{'═' * W}╣")
-    print(f"║  {'Jobs waiting for review / tailoring:':<40}{len(pending):<{W - 42}}  ║")
+    if analysed:
+        print(f"║  {'Awaiting your review:':<40}{len(analysed):<{W - 42}}  ║")
+        for job in analysed[:3]:
+            label = f"    • {job['title'][:42]} @ {job['company'][:16]}"
+            print(f"║  {label:<{W - 2}}  ║")
+        if len(analysed) > 3:
+            print(f"║  {'    … and more':<{W - 2}}  ║")
+    if errored:
+        print(f"║  {'Failed (need retry):':<40}{len(errored):<{W - 42}}  ║")
+        for job in errored[:3]:
+            label = f"    • {job['title'][:42]} @ {job['company'][:16]}"
+            print(f"║  {label:<{W - 2}}  ║")
+        if len(errored) > 3:
+            print(f"║  {'    … and more':<{W - 2}}  ║")
     print(f"╚{'═' * W}╝")
     print()
-    print("  [r] Resume   — go straight to Phase 2 with pending jobs  (default)")
-    print("  [f] Full run — scout + analyse new jobs, then review all")
-    print("  [q] Quit")
+
+    options = []
+    if analysed:
+        options.append("  [r] Resume   — go straight to Phase 2 (skip Scout)")
+    if errored:
+        options.append("  [e] Retry    — re-analyse failed jobs, then Phase 2 (skip Scout)")
+    options.append("  [f] Full run — scout new jobs, retry errors, then review all")
+    options.append("  [q] Quit")
+    for opt in options:
+        print(opt)
     print()
 
+    valid = {"f", "q"}
+    if analysed:
+        valid.add("r")
+    if errored:
+        valid.add("e")
+
     while True:
-        answer = input("How would you like to start? [r / f / q]: ").strip().lower()
-        if answer in ("", "r"):
-            log.info("Startup mode: resume — %d pending jobs", len(pending))
+        answer = input("How would you like to start? [" + " / ".join(sorted(valid)) + "]: ").strip().lower()
+        if answer == "r" and "r" in valid:
+            log.info("Startup mode: resume — %d pending jobs", len(analysed))
             return "resume"
+        if answer == "e" and "e" in valid:
+            log.info("Startup mode: retry — %d errored jobs", len(errored))
+            return "retry"
         if answer == "f":
             log.info("Startup mode: full run")
             return "full"
@@ -454,8 +487,10 @@ async def orchestrate() -> None:
     all_results = []   # every result dict regardless of outcome
     analysed    = []   # only "passed" results
 
-    if startup_mode == "resume":
-        # ── Resume path: skip Scout + Phase 1, load pending jobs ──
+    if startup_mode in ("resume", "retry"):
+        # ── Resume / retry path: skip Scout ───────────────────────
+
+        # Load previously-analysed jobs for Phase 2
         for job in tracker.get_analysed_jobs():
             analysis_file = config.ANALYSES_DIR / f"analysis_{job['job_id']}.json"
             if not analysis_file.exists():
@@ -466,6 +501,32 @@ async def orchestrate() -> None:
             score = analysis.get("relevance_score", 0)
             log.info("  Loaded: %s @ %s (score %d)", job["title"], job["company"], score)
             analysed.append({"job": job, "analysis": analysis, "score": score, "outcome": "passed"})
+
+        # Re-analyse errored jobs (mini Phase 1) if retry mode
+        if startup_mode == "retry":
+            errored_jobs = tracker.get_pending_work()["errored"]
+            if errored_jobs:
+                log.info("=" * 60)
+                log.info("RETRY PHASE — Re-analysing %d errored jobs", len(errored_jobs))
+                log.info("=" * 60)
+                for i, job in enumerate(errored_jobs, 1):
+                    log.info("-" * 50)
+                    log.info("[%d/%d] %s @ %s", i, len(errored_jobs), job["title"], job["company"])
+                    # Reset to 'new' so it gets analysed cleanly
+                    tracker.update_job_status(job["job_id"], "new")
+                    try:
+                        result = await step_analyse(job)
+                        all_results.append(result)
+                        if result["outcome"] == "passed":
+                            analysed.append(result)
+                        elif result["outcome"] in ("auto_rejected", "low_score"):
+                            auto_rejected.append(result["job"])
+                        else:
+                            errors.append(result["job"])
+                    except Exception as exc:
+                        log.error("  Retry error for %s: %s", job.get("title"), exc, exc_info=True)
+                        tracker.log_error(job["job_id"], str(exc))
+                        errors.append(job)
 
         jobs = [r["job"] for r in analysed]
 

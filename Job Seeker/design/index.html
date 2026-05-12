@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ApplyAI – Land your next role faster</title>
+<style>
+  /* ── Reset & tokens ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:        #0f1117;
+    --bg2:       #161b27;
+    --bg3:       #1e2535;
+    --border:    #2a3348;
+    --text:      #e8eaf0;
+    --muted:     #7a849a;
+    --accent:    #4f7cff;
+    --accent2:   #6c47ff;
+    --green:     #22c55e;
+    --yellow:    #f59e0b;
+    --red:       #ef4444;
+    --radius:    10px;
+    --sidebar-w: 220px;
+  }
+  body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  a { color: inherit; text-decoration: none; }
+  button { cursor: pointer; font-family: inherit; }
+  input, textarea, select { font-family: inherit; }
+
+  /* ── Pages ──────────────────────────────────────────────────── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── LANDING ────────────────────────────────────────────────── */
+  .landing { min-height: 100vh; display: flex; flex-direction: column; }
+  .nav-bar { display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px; border-bottom: 1px solid var(--border); }
+  .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px;
+    background: linear-gradient(135deg, #4f7cff, #a78bfa); -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent; }
+  .nav-links { display: flex; gap: 28px; color: var(--muted); font-size: 14px; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta { display: flex; gap: 12px; align-items: center; }
+  .btn { padding: 9px 20px; border-radius: 8px; font-size: 14px; font-weight: 500;
+    border: none; transition: all .15s; }
+  .btn-ghost { background: transparent; color: var(--muted); }
+  .btn-ghost:hover { color: var(--text); background: var(--bg3); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-primary:hover { background: #3d6aee; }
+  .btn-outline { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  .hero { flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; padding: 80px 24px; }
+  .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px;
+    background: rgba(79,124,255,.12); border: 1px solid rgba(79,124,255,.3);
+    border-radius: 99px; font-size: 12px; color: var(--accent); margin-bottom: 28px; }
+  .hero-badge span { background: var(--accent); color: #fff; font-size: 10px;
+    font-weight: 600; padding: 2px 7px; border-radius: 99px; }
+  .hero h1 { font-size: clamp(36px, 6vw, 64px); font-weight: 800; line-height: 1.1;
+    letter-spacing: -2px; margin-bottom: 20px; }
+  .hero h1 em { font-style: normal; background: linear-gradient(135deg,#4f7cff,#a78bfa);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { font-size: 18px; color: var(--muted); max-width: 520px; line-height: 1.65; margin-bottom: 36px; }
+  .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn-lg { padding: 13px 28px; font-size: 15px; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+    max-width: 900px; margin: 64px auto 0; padding: 0 24px 80px; }
+  .feature-card { background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; }
+  .feat-icon { font-size: 26px; margin-bottom: 14px; }
+  .feature-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
+  .feature-card p { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── AUTH ───────────────────────────────────────────────────── */
+  .auth-page { min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 24px; }
+  .auth-card { background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 16px; padding: 40px; width: 100%; max-width: 400px; }
+  .auth-logo { text-align: center; margin-bottom: 28px; }
+  .auth-logo .logo { font-size: 22px; }
+  .auth-card h2 { font-size: 22px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .auth-card .sub { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 28px; }
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--muted); }
+  .form-group input { width: 100%; padding: 10px 14px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 14px; outline: none; transition: border .15s; }
+  .form-group input:focus { border-color: var(--accent); }
+  .auth-card .btn-primary { width: 100%; padding: 11px; font-size: 14px; margin-top: 8px; }
+  .auth-switch { text-align: center; margin-top: 20px; font-size: 13px; color: var(--muted); }
+  .auth-switch a { color: var(--accent); cursor: pointer; }
+  .divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .divider span { font-size: 12px; color: var(--muted); }
+  .btn-google { width: 100%; padding: 10px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .btn-google:hover { border-color: var(--accent); }
+
+  /* ── APP SHELL ──────────────────────────────────────────────── */
+  .app-shell { display: flex; min-height: 100vh; }
+  .sidebar { width: var(--sidebar-w); background: var(--bg2); border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; padding: 20px 0; position: fixed;
+    height: 100vh; top: 0; left: 0; }
+  .sidebar-logo { padding: 4px 20px 20px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  .sidebar-logo .logo { font-size: 18px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px;
+    font-size: 14px; color: var(--muted); border-radius: 0; cursor: pointer;
+    transition: all .12s; position: relative; }
+  .nav-item:hover { color: var(--text); background: var(--bg3); }
+  .nav-item.active { color: var(--text); background: rgba(79,124,255,.1); }
+  .nav-item.active::before { content: ''; position: absolute; left: 0; top: 0;
+    height: 100%; width: 3px; background: var(--accent); border-radius: 0 2px 2px 0; }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .sidebar-bottom { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border); }
+  .user-pill { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg,#4f7cff,#a78bfa);
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; }
+  .user-info { flex: 1; min-width: 0; }
+  .user-info .name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-info .plan { font-size: 11px; color: var(--accent); }
+
+  .main-content { margin-left: var(--sidebar-w); flex: 1; padding: 36px 40px; min-width: 0; }
+  .page-header { margin-bottom: 28px; }
+  .page-header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.5px; }
+  .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  /* ── CARDS / STATS ──────────────────────────────────────────── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: .5px; }
+  .stat-val { font-size: 28px; font-weight: 700; letter-spacing: -1px; }
+  .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .stat-green { color: var(--green); }
+  .stat-accent { color: var(--accent); }
+
+  /* ── DASHBOARD ──────────────────────────────────────────────── */
+  .dash-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+  .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  .card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  .card-title .see-all { font-size: 12px; color: var(--accent); cursor: pointer; font-weight: 400; }
+
+  .recent-jobs { display: flex; flex-direction: column; gap: 10px; }
+  .job-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px;
+    background: var(--bg3); border-radius: 8px; cursor: pointer; transition: border .15s;
+    border: 1px solid transparent; }
+  .job-row:hover { border-color: var(--border); }
+  .job-co-logo { width: 36px; height: 36px; border-radius: 8px; background: var(--bg2);
+    border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .job-info { flex: 1; min-width: 0; }
+  .job-title { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .job-company { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .score-pill { font-size: 12px; font-weight: 600; padding: 3px 10px;
+    border-radius: 99px; flex-shrink: 0; }
+  .score-high { background: rgba(34,197,94,.12); color: var(--green); }
+  .score-med  { background: rgba(245,158,11,.12); color: var(--yellow); }
+  .score-low  { background: rgba(239,68,68,.12);  color: var(--red); }
+
+  .status-badge { font-size: 11px; font-weight: 500; padding: 2px 9px;
+    border-radius: 99px; flex-shrink: 0; }
+  .badge-new      { background: rgba(79,124,255,.12); color: var(--accent); }
+  .badge-tailored { background: rgba(167,139,250,.12); color: #a78bfa; }
+  .badge-skipped  { background: rgba(122,132,154,.12); color: var(--muted); }
+  .badge-submitted { background: rgba(34,197,94,.12); color: var(--green); }
+
+  .activity-list { display: flex; flex-direction: column; gap: 12px; }
+  .activity-item { display: flex; gap: 12px; align-items: flex-start; font-size: 13px; }
+  .activity-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+  .dot-green { background: var(--green); }
+  .dot-accent { background: var(--accent); }
+  .dot-yellow { background: var(--yellow); }
+  .activity-text { flex: 1; color: var(--muted); line-height: 1.5; }
+  .activity-text strong { color: var(--text); }
+  .activity-time { font-size: 11px; color: var(--muted); flex-shrink: 0; }
+
+  /* ── JOBS PAGE ──────────────────────────────────────────────── */
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+  .search-box { flex: 1; min-width: 200px; position: relative; }
+  .search-box input { width: 100%; padding: 9px 14px 9px 36px; background: var(--bg2);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-size: 14px; outline: none; }
+  .search-box input:focus { border-color: var(--accent); }
+  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 14px; }
+  .filter-btn { padding: 9px 16px; background: var(--bg2); border: 1px solid var(--border);
+    border-radius: 8px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .filter-btn:hover { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(79,124,255,.1); }
+
+  .jobs-table { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .table-head { display: grid; grid-template-columns: 2fr 1.2fr 80px 100px 120px 100px;
+    padding: 11px 20px; border-bottom: 1px solid var(--border); }
+  .th { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .table-row { display: grid; grid-template-columns: 2fr 1.2fr 80px 100px 120px 100px;
+    padding: 14px 20px; border-bottom: 1px solid var(--border); align-items: center;
+    cursor: pointer; transition: background .1s; }
+  .table-row:last-child { border-bottom: none; }
+  .table-row:hover { background: var(--bg3); }
+  .td { font-size: 13px; }
+  .td-title { font-weight: 500; }
+  .td-company { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .score-bar { display: flex; align-items: center; gap: 8px; }
+  .bar-bg { flex: 1; height: 4px; background: var(--bg3); border-radius: 99px; }
+  .bar-fill { height: 100%; border-radius: 99px; }
+
+  /* ── JOB DETAIL PANEL ───────────────────────────────────────── */
+  .detail-panel { position: fixed; right: 0; top: 0; height: 100vh; width: 480px;
+    background: var(--bg2); border-left: 1px solid var(--border); overflow-y: auto;
+    transform: translateX(100%); transition: transform .25s; z-index: 100; display: flex; flex-direction: column; }
+  .detail-panel.open { transform: translateX(0); }
+  .panel-header { padding: 20px 24px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 16px; }
+  .panel-close { width: 30px; height: 30px; background: var(--bg3); border: none;
+    border-radius: 6px; color: var(--muted); font-size: 16px; display: flex;
+    align-items: center; justify-content: center; margin-left: auto; }
+  .panel-close:hover { color: var(--text); }
+  .panel-body { padding: 24px; flex: 1; overflow-y: auto; }
+  .panel-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .panel-company { font-size: 14px; color: var(--muted); }
+  .panel-meta { display: flex; gap: 10px; flex-wrap: wrap; margin: 16px 0; }
+  .meta-chip { padding: 4px 12px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 99px; font-size: 12px; color: var(--muted); }
+  .score-circle { width: 72px; height: 72px; border-radius: 50%;
+    background: conic-gradient(var(--green) calc(var(--pct) * 1%), var(--bg3) 0);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; position: relative; }
+  .score-inner { width: 56px; height: 56px; border-radius: 50%; background: var(--bg2);
+    display: flex; align-items: center; justify-content: center; flex-direction: column; }
+  .score-num { font-size: 18px; font-weight: 700; }
+  .score-lbl { font-size: 9px; color: var(--muted); }
+  .section-lbl { font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px; margin: 20px 0 10px; }
+  .dim-rows { display: flex; flex-direction: column; gap: 8px; }
+  .dim-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .dim-name { width: 160px; color: var(--muted); flex-shrink: 0; }
+  .dim-bar-bg { flex: 1; height: 6px; background: var(--bg3); border-radius: 99px; }
+  .dim-bar-fill { height: 100%; border-radius: 99px; background: var(--accent); }
+  .dim-score { font-size: 12px; font-weight: 600; width: 40px; text-align: right; }
+  .tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag { padding: 4px 10px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 6px; font-size: 12px; }
+  .flag { display: flex; gap: 8px; font-size: 13px; align-items: flex-start; margin-bottom: 6px; }
+  .flag-icon { flex-shrink: 0; }
+  .panel-actions { padding: 20px 24px; border-top: 1px solid var(--border);
+    display: flex; gap: 10px; }
+  .panel-actions .btn { flex: 1; justify-content: center; }
+  .btn-success { background: rgba(34,197,94,.15); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+  .btn-success:hover { background: rgba(34,197,94,.25); }
+
+  /* ── RESUME BUILDER ──────────────────────────────────────────── */
+  .builder-layout { display: grid; grid-template-columns: 1fr 420px; gap: 24px; align-items: start; }
+  .builder-form { display: flex; flex-direction: column; gap: 20px; }
+  .form-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px; }
+  .form-card-title { font-size: 14px; font-weight: 600; margin-bottom: 16px;
+    display: flex; align-items: center; gap: 8px; }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .form-group textarea { width: 100%; padding: 10px 14px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 14px; outline: none; resize: vertical; min-height: 90px; transition: border .15s; }
+  .form-group textarea:focus { border-color: var(--accent); }
+  .experience-item { background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+  .exp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .exp-title { font-size: 13px; font-weight: 600; }
+  .btn-icon { width: 28px; height: 28px; background: none; border: 1px solid var(--border);
+    border-radius: 6px; color: var(--muted); font-size: 14px; display: flex;
+    align-items: center; justify-content: center; }
+  .btn-icon:hover { color: var(--red); border-color: var(--red); }
+  .add-btn { display: flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 10px; background: var(--bg3); border: 1px dashed var(--border);
+    border-radius: 8px; font-size: 13px; color: var(--muted); width: 100%; }
+  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .resume-preview { background: white; border-radius: var(--radius);
+    padding: 32px; color: #111; position: sticky; top: 24px; font-size: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.4); line-height: 1.5; }
+  .preview-name { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; text-align: center; text-transform: uppercase; }
+  .preview-contact { text-align: center; color: #555; font-size: 11px; margin: 4px 0 10px; }
+  .preview-hr { border: none; border-top: 2px solid #111; margin: 8px 0; }
+  .preview-section { font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; margin: 12px 0 4px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }
+  .preview-job-title { font-weight: 700; font-size: 12px; }
+  .preview-job-co { color: #555; font-size: 11px; }
+  .preview-bullet { padding-left: 12px; color: #333; margin: 2px 0; position: relative; }
+  .preview-bullet::before { content: '•'; position: absolute; left: 2px; }
+  .preview-skill { display: inline; }
+  .preview-skill strong { font-weight: 700; }
+
+  /* ── PROFILE PAGE ────────────────────────────────────────────── */
+  .profile-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .full-width { grid-column: 1 / -1; }
+  .form-group select { width: 100%; padding: 10px 14px; background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 14px; outline: none; }
+  .tag-input-wrap { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; min-height: 44px; }
+  .tag-editable { padding: 3px 10px; background: rgba(79,124,255,.15); border: 1px solid rgba(79,124,255,.3);
+    border-radius: 99px; font-size: 12px; color: var(--accent); display: flex; align-items: center; gap: 6px; }
+  .tag-editable button { background: none; border: none; color: var(--accent); font-size: 14px; line-height: 1; padding: 0; }
+  .tag-input-wrap input { flex: 1; min-width: 120px; background: none; border: none;
+    color: var(--text); font-size: 13px; outline: none; }
+  .salary-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .range-label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+
+  /* ── SEARCH PAGE ─────────────────────────────────────────────── */
+  .search-page-grid { display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; }
+  .source-list { display: flex; flex-direction: column; gap: 10px; }
+  .source-item { display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; }
+  .source-logo { font-size: 20px; }
+  .source-info { flex: 1; }
+  .source-name { font-size: 13px; font-weight: 500; }
+  .source-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .toggle { position: relative; width: 36px; height: 20px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--border);
+    border-radius: 99px; transition: .2s; cursor: pointer; }
+  .toggle-slider::before { content: ''; position: absolute; width: 14px; height: 14px;
+    left: 3px; top: 3px; background: white; border-radius: 50%; transition: .2s; }
+  .toggle input:checked + .toggle-slider { background: var(--accent); }
+  .toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+  .run-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+  .run-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+  .run-stat { background: var(--bg3); border-radius: 8px; padding: 14px; text-align: center; }
+  .run-stat-val { font-size: 22px; font-weight: 700; }
+  .run-stat-lbl { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .progress-section { margin-bottom: 20px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px;
+    color: var(--muted); margin-bottom: 6px; }
+  .progress-bar { height: 8px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 99px; transition: width .5s; }
+  .log-box { background: #0a0c10; border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    color: #8fbc8f; height: 160px; overflow-y: auto; line-height: 1.7; }
+  .log-line { margin-bottom: 2px; }
+  .log-line .ts { color: #4a5568; }
+  .log-line .info { color: #63b3ed; }
+  .log-line .ok { color: #68d391; }
+  .log-line .err { color: #fc8181; }
+  .start-btn { width: 100%; padding: 14px; font-size: 15px; font-weight: 600;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none; border-radius: 10px; color: white; margin-top: 4px; }
+  .start-btn:hover { opacity: .9; }
+  .start-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── SETTINGS ────────────────────────────────────────────────── */
+  .settings-layout { display: grid; grid-template-columns: 200px 1fr; gap: 28px; }
+  .settings-nav { display: flex; flex-direction: column; gap: 4px; }
+  .settings-nav-item { padding: 9px 14px; border-radius: 8px; font-size: 14px;
+    color: var(--muted); cursor: pointer; }
+  .settings-nav-item:hover { color: var(--text); background: var(--bg3); }
+  .settings-nav-item.active { color: var(--text); background: var(--bg3); }
+  .settings-section { display: none; }
+  .settings-section.active { display: block; }
+  .billing-plan { background: var(--bg3); border: 2px solid var(--accent);
+    border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .plan-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .plan-name { font-size: 16px; font-weight: 700; }
+  .plan-price { font-size: 22px; font-weight: 700; }
+  .plan-price span { font-size: 13px; color: var(--muted); }
+  .plan-features { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+  .plan-feature { display: flex; gap: 8px; font-size: 13px; color: var(--muted); }
+  .plan-feature .check { color: var(--green); }
+  .usage-bar-group { margin-bottom: 16px; }
+  .usage-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; }
+  .usage-bar { height: 8px; background: var(--bg3); border-radius: 99px; overflow: hidden; }
+  .usage-fill { height: 100%; border-radius: 99px; background: var(--accent); }
+
+  /* ── MISC ────────────────────────────────────────────────────── */
+  .empty-state { text-align: center; padding: 60px 24px; color: var(--muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 14px; }
+  .empty-state p { font-size: 14px; }
+  .chip { padding: 3px 9px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+  .chip-purple { background: rgba(167,139,250,.12); color: #a78bfa; }
+  .chip-green  { background: rgba(34,197,94,.12);   color: var(--green); }
+  .tooltip { font-size: 12px; color: var(--muted); }
+  hr.sep { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ LANDING -->
+<div class="page active" id="page-landing">
+<div class="landing">
+  <nav class="nav-bar">
+    <div class="logo">ApplyAI</div>
+    <div class="nav-links">
+      <a href="#">Features</a>
+      <a href="#">Pricing</a>
+      <a href="#">Docs</a>
+    </div>
+    <div class="nav-cta">
+      <button class="btn btn-ghost" onclick="go('login')">Sign in</button>
+      <button class="btn btn-primary" onclick="go('signup')">Get started free</button>
+    </div>
+  </nav>
+  <div class="hero">
+    <div class="hero-badge"><span>NEW</span> AI-powered job matching</div>
+    <h1>Land your next role<br /><em>10× faster</em></h1>
+    <p>ApplyAI scans job boards, scores every listing against your profile, and generates a tailored CV and cover letter — automatically.</p>
+    <div class="hero-btns">
+      <button class="btn btn-primary btn-lg" onclick="go('signup')">Start for free</button>
+      <button class="btn btn-outline btn-lg" onclick="go('dashboard')">View demo →</button>
+    </div>
+  </div>
+  <div class="features">
+    <div class="feature-card">
+      <div class="feat-icon">🔍</div>
+      <h3>Smart Job Scout</h3>
+      <p>Crawls LinkedIn and other job boards daily. Scores every role 0–100 against your exact profile.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">📄</div>
+      <h3>Tailored Applications</h3>
+      <p>One click generates a custom CV and cover letter with ATS keywords mirrored from the job description.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feat-icon">📊</div>
+      <h3>Application Tracker</h3>
+      <p>Track every job you've applied to, with full scoring breakdowns and interview prep notes.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ LOGIN -->
+<div class="page" id="page-login">
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo"><div class="logo">ApplyAI</div></div>
+    <h2>Welcome back</h2>
+    <div class="sub">Sign in to your account</div>
+    <button class="btn-google" onclick="go('dashboard')">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.5 1.2 8.9 3.2l6.6-6.6C35.5 2.5 30.1 0 24 0 14.6 0 6.6 5.4 2.8 13.3l7.7 6c1.8-5.4 6.8-9.8 13.5-9.8z"/><path fill="#4285F4" d="M46.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.2-10 7.2-17z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.1.8-4.6l-7.7-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.8 10.7l7.7-6.1z"/><path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.5 2.2-6.6 0-12.2-4.4-14.2-10.4l-7.7 6C6.6 42.5 14.6 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+    <div class="divider"><span>or</span></div>
+    <div class="form-group"><label>Email</label><input type="email" placeholder="you@example.com" /></div>
+    <div class="form-group"><label>Password</label><input type="password" placeholder="••••••••" /></div>
+    <button class="btn btn-primary" onclick="go('dashboard')">Sign in</button>
+    <div class="auth-switch">Don't have an account? <a onclick="go('signup')">Sign up free</a></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ SIGNUP -->
+<div class="page" id="page-signup">
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo"><div class="logo">ApplyAI</div></div>
+    <h2>Create your account</h2>
+    <div class="sub">Start your free trial — no card required</div>
+    <button class="btn-google" onclick="go('dashboard')">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.5 1.2 8.9 3.2l6.6-6.6C35.5 2.5 30.1 0 24 0 14.6 0 6.6 5.4 2.8 13.3l7.7 6c1.8-5.4 6.8-9.8 13.5-9.8z"/><path fill="#4285F4" d="M46.6 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4 7.2-10 7.2-17z"/><path fill="#FBBC05" d="M10.5 28.6A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.1.8-4.6l-7.7-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.8 10.7l7.7-6.1z"/><path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.5l-7.5-5.8c-2 1.4-4.6 2.2-7.5 2.2-6.6 0-12.2-4.4-14.2-10.4l-7.7 6C6.6 42.5 14.6 48 24 48z"/></svg>
+      Continue with Google
+    </button>
+    <div class="divider"><span>or</span></div>
+    <div class="form-grid-2" style="margin-bottom:0">
+      <div class="form-group"><label>First name</label><input placeholder="Piotr" /></div>
+      <div class="form-group"><label>Last name</label><input placeholder="Kaminski" /></div>
+    </div>
+    <div class="form-group"><label>Email</label><input type="email" placeholder="you@example.com" /></div>
+    <div class="form-group"><label>Password</label><input type="password" placeholder="Min. 8 characters" /></div>
+    <button class="btn btn-primary" onclick="go('dashboard')">Create account</button>
+    <div class="auth-switch">Already have an account? <a onclick="go('login')">Sign in</a></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════ APP SHELL -->
+<div class="page" id="page-app">
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo"><div class="logo">ApplyAI</div></div>
+    <div class="nav-item active" id="nav-dashboard"  onclick="showApp('dashboard')"><span class="icon">⊞</span>Dashboard</div>
+    <div class="nav-item" id="nav-jobs"       onclick="showApp('jobs')"><span class="icon">💼</span>Jobs</div>
+    <div class="nav-item" id="nav-search"     onclick="showApp('search')"><span class="icon">🔍</span>Job Search</div>
+    <div class="nav-item" id="nav-resume"     onclick="showApp('resume')"><span class="icon">📄</span>Resume Builder</div>
+    <div class="nav-item" id="nav-profile"    onclick="showApp('profile')"><span class="icon">👤</span>My Profile</div>
+    <div class="nav-item" id="nav-settings"   onclick="showApp('settings')"><span class="icon">⚙️</span>Settings</div>
+    <div class="sidebar-bottom">
+      <div class="user-pill">
+        <div class="avatar">PK</div>
+        <div class="user-info">
+          <div class="name">Piotr Kaminski</div>
+          <div class="plan">Pro plan</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="app-section active" id="app-dashboard">
+      <div class="page-header">
+        <h1>Good morning, Piotr 👋</h1>
+        <p>Here's what happened since your last session.</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Jobs scanned</div>
+          <div class="stat-val stat-accent">366</div>
+          <div class="stat-sub">All time</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Applications sent</div>
+          <div class="stat-val">17</div>
+          <div class="stat-sub">Across all runs</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Pending review</div>
+          <div class="stat-val stat-accent">19</div>
+          <div class="stat-sub">Awaiting your decision</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg. match score</div>
+          <div class="stat-val stat-green">74</div>
+          <div class="stat-sub">Above threshold (60)</div>
+        </div>
+      </div>
+      <div class="dash-grid">
+        <div class="card">
+          <div class="card-title">Top matches <span class="see-all" onclick="showApp('jobs')">See all →</span></div>
+          <div class="recent-jobs">
+            <div class="job-row" onclick="openPanel('dg')">
+              <div class="job-co-logo">🤖</div>
+              <div class="job-info"><div class="job-title">Solutions Engineer</div><div class="job-company">DigitalGenius · Remote</div></div>
+              <div class="score-pill score-high">89</div>
+              <div class="status-badge badge-new">New</div>
+            </div>
+            <div class="job-row" onclick="openPanel('ol')">
+              <div class="job-co-logo">🏆</div>
+              <div class="job-info"><div class="job-title">Technical Consultant (SaaS)</div><div class="job-company">Open Loyalty · Remote</div></div>
+              <div class="score-pill score-high">83</div>
+              <div class="status-badge badge-new">New</div>
+            </div>
+            <div class="job-row">
+              <div class="job-co-logo">💼</div>
+              <div class="job-info"><div class="job-title">Sr. Technical Account Manager</div><div class="job-company">Workday · Hybrid</div></div>
+              <div class="score-pill score-high">81</div>
+              <div class="status-badge badge-new">New</div>
+            </div>
+            <div class="job-row">
+              <div class="job-co-logo">🔵</div>
+              <div class="job-info"><div class="job-title">Customer Solutions Engineer</div><div class="job-company">Google · Remote, Poland</div></div>
+              <div class="score-pill score-high">80</div>
+              <div class="status-badge badge-tailored">Tailored</div>
+            </div>
+            <div class="job-row">
+              <div class="job-co-logo">📧</div>
+              <div class="job-info"><div class="job-title">Technical Solutions Engineer</div><div class="job-company">Omnisend · Remote</div></div>
+              <div class="score-pill score-med">78</div>
+              <div class="status-badge badge-new">New</div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Recent activity</div>
+          <div class="activity-list">
+            <div class="activity-item">
+              <div class="activity-dot dot-green"></div>
+              <div class="activity-text"><strong>Materials prepared</strong> for Blazity Technical Solutions Engineer</div>
+              <div class="activity-time">2h ago</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot dot-accent"></div>
+              <div class="activity-text"><strong>45 jobs scanned</strong> across LinkedIn and justjoin.it</div>
+              <div class="activity-time">3h ago</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot dot-yellow"></div>
+              <div class="activity-text"><strong>21 jobs</strong> failed analysis — retry recommended</div>
+              <div class="activity-time">3h ago</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot dot-green"></div>
+              <div class="activity-text"><strong>Applied</strong> to Constructor Technical Integration Consultant</div>
+              <div class="activity-time">2d ago</div>
+            </div>
+            <div class="activity-item">
+              <div class="activity-dot dot-accent"></div>
+              <div class="activity-text"><strong>Profile updated</strong> — salary range adjusted</div>
+              <div class="activity-time">3d ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── JOBS ── -->
+    <div class="app-section" id="app-jobs">
+      <div class="page-header">
+        <h1>Jobs</h1>
+        <p>19 jobs awaiting your review · 366 scanned all time</p>
+      </div>
+      <div class="toolbar">
+        <div class="search-box"><span class="search-icon">🔍</span><input placeholder="Search title, company…" /></div>
+        <button class="filter-btn active">All</button>
+        <button class="filter-btn">New</button>
+        <button class="filter-btn">Tailored</button>
+        <button class="filter-btn">Submitted</button>
+        <button class="filter-btn">Skipped</button>
+      </div>
+      <div class="jobs-table">
+        <div class="table-head">
+          <div class="th">Role</div>
+          <div class="th">Location</div>
+          <div class="th">Score</div>
+          <div class="th">Salary</div>
+          <div class="th">Status</div>
+          <div class="th">Found</div>
+        </div>
+        <div class="table-row" onclick="openPanel('dg')">
+          <div class="td"><div class="td-title">Solutions Engineer</div><div class="td-company">DigitalGenius</div></div>
+          <div class="td" style="color:var(--muted);font-size:12px">Remote</div>
+          <div class="td">
+            <div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:89%;background:var(--green)"></div></div><span style="font-size:12px;font-weight:600;color:var(--green)">89</span></div>
+          </div>
+          <div class="td" style="font-size:12px;color:var(--muted)">28k PLN</div>
+          <div class="td"><div class="status-badge badge-new">New</div></div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Today</div>
+        </div>
+        <div class="table-row" onclick="openPanel('ol')">
+          <div class="td"><div class="td-title">Technical Consultant (SaaS)</div><div class="td-company">Open Loyalty</div></div>
+          <div class="td" style="color:var(--muted);font-size:12px">Remote</div>
+          <div class="td">
+            <div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:83%;background:var(--green)"></div></div><span style="font-size:12px;font-weight:600;color:var(--green)">83</span></div>
+          </div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Not listed</div>
+          <div class="td"><div class="status-badge badge-new">New</div></div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Today</div>
+        </div>
+        <div class="table-row">
+          <div class="td"><div class="td-title">Sr. Technical Account Manager</div><div class="td-company">Workday</div></div>
+          <div class="td" style="color:var(--muted);font-size:12px">Hybrid, Warsaw</div>
+          <div class="td">
+            <div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:81%;background:var(--green)"></div></div><span style="font-size:12px;font-weight:600;color:var(--green)">81</span></div>
+          </div>
+          <div class="td" style="font-size:12px;color:var(--muted)">22–35k PLN</div>
+          <div class="td"><div class="status-badge badge-new">New</div></div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Today</div>
+        </div>
+        <div class="table-row">
+          <div class="td"><div class="td-title">Customer Solutions Engineer</div><div class="td-company">Google</div></div>
+          <div class="td" style="color:var(--muted);font-size:12px">Remote, Poland</div>
+          <div class="td">
+            <div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:80%;background:var(--green)"></div></div><span style="font-size:12px;font-weight:600;color:var(--green)">80</span></div>
+          </div>
+          <div class="td" style="font-size:12px;color:var(--muted)">—</div>
+          <div class="td"><div class="status-badge badge-tailored">Tailored</div></div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Yesterday</div>
+        </div>
+        <div class="table-row">
+          <div class="td"><div class="td-title">Technical Solutions Engineer</div><div class="td-company">Omnisend</div></div>
+          <div class="td" style="color:var(--muted);font-size:12px">Remote</div>
+          <div class="td">
+            <div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:78%;background:var(--yellow)"></div></div><span style="font-size:12px;font-weight:600;color:var(--yellow)">78</span></div>
+          </div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Not listed</div>
+          <div class="td"><div class="status-badge badge-new">New</div></div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Yesterday</div>
+        </div>
+        <div class="table-row">
+          <div class="td"><div class="td-title">Technical Solutions Engineer</div><div class="td-company">Blazity</div></div>
+          <div class="td" style="color:var(--muted);font-size:12px">Remote</div>
+          <div class="td">
+            <div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:75%;background:var(--yellow)"></div></div><span style="font-size:12px;font-weight:600;color:var(--yellow)">75</span></div>
+          </div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Not listed</div>
+          <div class="td"><div class="status-badge badge-submitted">Submitted</div></div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Apr 14</div>
+        </div>
+        <div class="table-row">
+          <div class="td"><div class="td-title">Integration Engineer</div><div class="td-company">Salesforce</div></div>
+          <div class="td" style="color:var(--muted);font-size:12px">Remote</div>
+          <div class="td">
+            <div class="score-bar"><div class="bar-bg"><div class="bar-fill" style="width:62%;background:var(--yellow)"></div></div><span style="font-size:12px;font-weight:600;color:var(--yellow)">62</span></div>
+          </div>
+          <div class="td" style="font-size:12px;color:var(--muted)">20–28k PLN</div>
+          <div class="td"><div class="status-badge badge-skipped">Skipped</div></div>
+          <div class="td" style="font-size:12px;color:var(--muted)">Apr 19</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── JOB SEARCH ── -->
+    <div class="app-section" id="app-search">
+      <div class="page-header">
+        <h1>Job Search</h1>
+        <p>Configure sources and run the AI pipeline.</p>
+      </div>
+      <div class="search-page-grid">
+        <div style="display:flex;flex-direction:column;gap:20px">
+          <div class="card">
+            <div class="card-title">Search sources</div>
+            <div class="source-list">
+              <div class="source-item">
+                <div class="source-logo">💼</div>
+                <div class="source-info">
+                  <div class="source-name">LinkedIn</div>
+                  <div class="source-desc">All work modes · Poland</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="source-item">
+                <div class="source-logo">🇵🇱</div>
+                <div class="source-info">
+                  <div class="source-name">justjoin.it</div>
+                  <div class="source-desc">Via WebSearch snippets</div>
+                </div>
+                <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="source-item" style="opacity:.45">
+                <div class="source-logo">🏢</div>
+                <div class="source-info">
+                  <div class="source-name">NoFluffJobs</div>
+                  <div class="source-desc">Coming soon</div>
+                </div>
+                <label class="toggle"><input type="checkbox" disabled /><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Run settings</div>
+            <div class="form-group"><label>Max jobs per run</label>
+              <input type="number" value="50" style="width:100%;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none" />
+            </div>
+            <div class="form-group"><label>Score threshold (0–100)</label>
+              <input type="number" value="60" style="width:100%;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none" />
+            </div>
+            <div class="form-group"><label>AI model</label>
+              <select style="width:100%;padding:9px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;outline:none">
+                <option>Auto (recommended)</option>
+                <option>claude-sonnet-4-6 (fast)</option>
+                <option>claude-opus-4 (thorough)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <div class="run-card">
+            <div class="card-title" style="margin-bottom:20px">Last run · Apr 23</div>
+            <div class="run-stats">
+              <div class="run-stat"><div class="run-stat-val stat-accent">45</div><div class="run-stat-lbl">Scanned</div></div>
+              <div class="run-stat"><div class="run-stat-val stat-green">19</div><div class="run-stat-lbl">Passed</div></div>
+              <div class="run-stat"><div class="run-stat-val" style="color:var(--muted)">21</div><div class="run-stat-lbl">Errors</div></div>
+              <div class="run-stat"><div class="run-stat-val" style="color:var(--muted)">2</div><div class="run-stat-lbl">Prepared</div></div>
+            </div>
+            <button class="start-btn" onclick="startRun()">▶ Start new search</button>
+          </div>
+          <div class="run-card" id="run-log-card" style="display:none">
+            <div class="card-title">Live progress</div>
+            <div class="progress-section">
+              <div class="progress-label"><span id="run-phase">Scout</span><span id="run-pct">0%</span></div>
+              <div class="progress-bar"><div class="progress-fill" id="run-bar" style="width:0%"></div></div>
+            </div>
+            <div class="log-box" id="log-box">
+              <div class="log-line"><span class="ts">10:02:06</span> <span class="info">INFO</span>  JOB AGENT — pipeline start</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── RESUME BUILDER ── -->
+    <div class="app-section" id="app-resume">
+      <div class="page-header">
+        <h1>Resume Builder</h1>
+        <p>Your master resume — the Tailor agent generates customised versions from this.</p>
+      </div>
+      <div class="builder-layout">
+        <div class="builder-form">
+          <div class="form-card">
+            <div class="form-card-title">📋 Personal details</div>
+            <div class="form-grid-2">
+              <div class="form-group"><label>Full name</label><input value="Piotr Kaminski" /></div>
+              <div class="form-group"><label>Location</label><input value="Krakow, Poland" /></div>
+              <div class="form-group"><label>Email</label><input value="piotrkaminski1@protonmail.com" /></div>
+              <div class="form-group"><label>Phone</label><input value="+48 510 934 702" /></div>
+            </div>
+            <div class="form-group"><label>LinkedIn URL</label><input value="linkedin.com/in/piotrkaminski" /></div>
+          </div>
+          <div class="form-card">
+            <div class="form-card-title">✍️ Professional summary</div>
+            <div class="form-group">
+              <textarea>Senior Technical Solutions Engineer with 10+ years driving SaaS platform adoption, API integration, and customer success. Proven expertise in API troubleshooting, technical onboarding, and B2B enterprise support.</textarea>
+            </div>
+          </div>
+          <div class="form-card">
+            <div class="form-card-title">💼 Experience</div>
+            <div class="experience-item">
+              <div class="exp-header">
+                <div class="exp-title">Lead Solutions Engineer · Luigi's Box</div>
+                <button class="btn-icon">✕</button>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group"><label>Start</label><input value="Jan 2025" /></div>
+                <div class="form-group"><label>End</label><input value="Present" /></div>
+              </div>
+              <div class="form-group"><label>Highlights (one per line)</label>
+                <textarea style="min-height:80px">Achieved zero churn on 100% of integration implementations
+Redesigned onboarding process cutting time-to-value by 30%
+Led pre-sales for DACH and UK enterprise accounts</textarea>
+              </div>
+              <div class="form-group"><label>Tech stack</label><input value="REST APIs, Python, SQL, AWS Lambda, JIRA" /></div>
+            </div>
+            <div class="experience-item">
+              <div class="exp-header">
+                <div class="exp-title">Technical Account Manager · Flexiroam</div>
+                <button class="btn-icon">✕</button>
+              </div>
+              <div class="form-grid-2">
+                <div class="form-group"><label>Start</label><input value="Jan 2023" /></div>
+                <div class="form-group"><label>End</label><input value="Dec 2024" /></div>
+              </div>
+              <div class="form-group"><label>Highlights (one per line)</label>
+                <textarea style="min-height:80px">100% B2B migration success across 50+ enterprise accounts
+25% YoY account growth through proactive enablement
+Developed and maintained REST API integrations for enterprise clients</textarea>
+              </div>
+            </div>
+            <button class="add-btn">+ Add experience</button>
+          </div>
+          <div class="form-card">
+            <div class="form-card-title">🛠 Skills</div>
+            <div class="form-group"><label>Technical skills</label><input value="REST APIs, Webhooks, API Integration, Postman, AWS Lambda, CloudWatch, SQL, Python, JSON" /></div>
+            <div class="form-group"><label>Tools</label><input value="JIRA, Confluence, Grafana, Chrome DevTools" /></div>
+            <div class="form-group"><label>Languages</label><input value="English (C1/C2), Polish (Native)" /></div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary btn-lg" style="flex:1">Save resume</button>
+            <button class="btn btn-outline btn-lg">Download PDF</button>
+          </div>
+        </div>
+        <!-- LIVE PREVIEW -->
+        <div class="resume-preview">
+          <div class="preview-name">Piotr Kaminski</div>
+          <div class="preview-contact">piotrkaminski1@protonmail.com · +48 510 934 702 · Krakow, Poland</div>
+          <hr class="preview-hr" />
+          <div class="preview-section">Professional Summary</div>
+          <p style="font-size:11px;color:#333;line-height:1.5;margin-bottom:8px">Senior Technical Solutions Engineer with 10+ years driving SaaS platform adoption, API integration, and customer success.</p>
+          <div class="preview-section">Skills</div>
+          <p style="font-size:11px;margin-bottom:4px"><span class="preview-skill"><strong>Technical: </strong>REST APIs, Webhooks, Postman, AWS Lambda, SQL</span></p>
+          <p style="font-size:11px;margin-bottom:8px"><span class="preview-skill"><strong>Tools: </strong>JIRA, Confluence, Grafana</span></p>
+          <div class="preview-section">Recent Experience</div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between">
+              <div class="preview-job-title">Lead Solutions Engineer, Luigi's Box</div>
+              <div style="font-size:11px;color:#555">2025–Present</div>
+            </div>
+            <div class="preview-bullet">Achieved zero churn on 100% of integration implementations</div>
+            <div class="preview-bullet">Redesigned onboarding — time-to-value cut by 30%</div>
+            <div class="preview-bullet">Led pre-sales for DACH and UK enterprise accounts</div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between">
+              <div class="preview-job-title">Technical Account Manager, Flexiroam</div>
+              <div style="font-size:11px;color:#555">2023–2024</div>
+            </div>
+            <div class="preview-bullet">100% B2B migration success across 50+ accounts</div>
+            <div class="preview-bullet">25% YoY account growth through proactive enablement</div>
+          </div>
+          <div class="preview-section">Languages</div>
+          <p style="font-size:11px">English (C1/C2) · Polish (Native)</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CANDIDATE PROFILE ── -->
+    <div class="app-section" id="app-profile">
+      <div class="page-header">
+        <h1>Candidate Profile</h1>
+        <p>This feeds the Analyst agent — the more precise you are, the better the scoring.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:20px;max-width:800px">
+        <div class="form-card">
+          <div class="form-card-title">🎯 Target roles</div>
+          <div class="form-group"><label>Role titles to search for</label>
+            <div class="tag-input-wrap" id="roles-wrap">
+              <div class="tag-editable">Solutions Engineer<button onclick="removeTag(this)">×</button></div>
+              <div class="tag-editable">Technical Account Manager<button onclick="removeTag(this)">×</button></div>
+              <div class="tag-editable">Sales Engineer<button onclick="removeTag(this)">×</button></div>
+              <div class="tag-editable">Delivery Manager<button onclick="removeTag(this)">×</button></div>
+              <div class="tag-editable">Integration Engineer<button onclick="removeTag(this)">×</button></div>
+              <input placeholder="Add role…" onkeydown="addTag(event,'roles-wrap')" />
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-title">💰 Salary expectations</div>
+          <div class="salary-row">
+            <div class="form-group"><div class="range-label">Minimum (PLN/month)</div><input value="16000" /></div>
+            <div class="form-group"><div class="range-label">Target (PLN/month)</div><input value="25000" /></div>
+          </div>
+          <div class="form-group"><label>Or hourly rate (PLN/hour)</label><input value="100–190" /></div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-title">📍 Work preferences</div>
+          <div class="form-grid-2">
+            <div class="form-group"><label>Location</label><input value="Krakow, Poland" /></div>
+            <div class="form-group"><label>Work mode</label>
+              <select>
+                <option selected>Remote-first (office OK)</option>
+                <option>Fully remote only</option>
+                <option>Hybrid acceptable</option>
+                <option>On-site only</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-title">🚫 Not interested in</div>
+          <div class="form-group"><label>Auto-reject if role involves</label>
+            <div class="tag-input-wrap" id="reject-wrap">
+              <div class="tag-editable" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--red)">AML/compliance<button onclick="removeTag(this)" style="color:var(--red)">×</button></div>
+              <div class="tag-editable" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--red)">Healthcare<button onclick="removeTag(this)" style="color:var(--red)">×</button></div>
+              <div class="tag-editable" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--red)">Pure quota sales<button onclick="removeTag(this)" style="color:var(--red)">×</button></div>
+              <div class="tag-editable" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:var(--red)">DevOps on-call<button onclick="removeTag(this)" style="color:var(--red)">×</button></div>
+              <input placeholder="Add exclusion…" onkeydown="addTag(event,'reject-wrap')" />
+            </div>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="form-card-title">✨ Key strengths (for scoring boosts)</div>
+          <div class="form-group"><label>Domain expertise</label>
+            <div class="tag-input-wrap" id="domain-wrap">
+              <div class="tag-editable">E-commerce / site search<button onclick="removeTag(this)">×</button></div>
+              <div class="tag-editable">Telecom / eSIM / BSS<button onclick="removeTag(this)">×</button></div>
+              <div class="tag-editable">Developer tools / APIs<button onclick="removeTag(this)">×</button></div>
+              <div class="tag-editable">Enterprise B2B SaaS<button onclick="removeTag(this)">×</button></div>
+              <input placeholder="Add domain…" onkeydown="addTag(event,'domain-wrap')" />
+            </div>
+          </div>
+          <div class="form-group"><label>Notable achievements</label>
+            <textarea>0% churn from integration issues
+100% B2B migration success rate
+25% account growth YoY
+89% Tier 2 support satisfaction rate
+$300K+ revenue protected via fraud prevention</textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary btn-lg" style="flex:1">Save profile</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SETTINGS ── -->
+    <div class="app-section" id="app-settings">
+      <div class="page-header">
+        <h1>Settings</h1>
+      </div>
+      <div class="settings-layout">
+        <div class="settings-nav">
+          <div class="settings-nav-item active" onclick="showSettings('billing',this)">Billing</div>
+          <div class="settings-nav-item" onclick="showSettings('account',this)">Account</div>
+          <div class="settings-nav-item" onclick="showSettings('notifications',this)">Notifications</div>
+          <div class="settings-nav-item" onclick="showSettings('api',this)">API Keys</div>
+        </div>
+        <div>
+          <!-- Billing -->
+          <div class="settings-section active" id="settings-billing">
+            <div class="billing-plan">
+              <div class="plan-header">
+                <div><div class="plan-name">Pro Plan <span class="chip chip-green">Active</span></div><div style="font-size:12px;color:var(--muted);margin-top:2px">Renews May 23, 2026</div></div>
+                <div class="plan-price">$19<span>/mo</span></div>
+              </div>
+              <div class="plan-features">
+                <div class="plan-feature"><span class="check">✓</span>Unlimited job searches</div>
+                <div class="plan-feature"><span class="check">✓</span>Unlimited CV & cover letter generation</div>
+                <div class="plan-feature"><span class="check">✓</span>All job sources (LinkedIn, justjoin.it)</div>
+                <div class="plan-feature"><span class="check">✓</span>Application history & analytics</div>
+              </div>
+            </div>
+            <div style="margin-bottom:20px">
+              <div class="card-title" style="font-size:13px;color:var(--muted);margin-bottom:14px">Monthly usage</div>
+              <div class="usage-bar-group">
+                <div class="usage-label"><span>Job searches</span><span style="color:var(--muted)">3 / unlimited</span></div>
+                <div class="usage-bar"><div class="usage-fill" style="width:15%"></div></div>
+              </div>
+              <div class="usage-bar-group">
+                <div class="usage-label"><span>CVs generated</span><span style="color:var(--muted)">2 / unlimited</span></div>
+                <div class="usage-bar"><div class="usage-fill" style="width:8%"></div></div>
+              </div>
+            </div>
+            <button class="btn btn-outline">Manage subscription →</button>
+          </div>
+          <!-- Account -->
+          <div class="settings-section" id="settings-account">
+            <div class="form-card">
+              <div class="form-card-title">Account details</div>
+              <div class="form-grid-2">
+                <div class="form-group"><label>First name</label><input value="Piotr" /></div>
+                <div class="form-group"><label>Last name</label><input value="Kaminski" /></div>
+              </div>
+              <div class="form-group"><label>Email</label><input value="piotrkaminski1@protonmail.com" /></div>
+              <hr class="sep" />
+              <div class="form-group"><label>New password</label><input type="password" placeholder="Leave blank to keep current" /></div>
+              <button class="btn btn-primary" style="margin-top:8px">Save changes</button>
+            </div>
+          </div>
+          <!-- Notifications -->
+          <div class="settings-section" id="settings-notifications">
+            <div class="form-card">
+              <div class="form-card-title">Email notifications</div>
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div class="source-item"><div class="source-info"><div class="source-name">Search completed</div><div class="source-desc">When a job scan finishes</div></div><label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label></div>
+                <div class="source-item"><div class="source-info"><div class="source-name">High-match job found</div><div class="source-desc">Score 85+</div></div><label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label></div>
+                <div class="source-item"><div class="source-info"><div class="source-name">Weekly summary</div><div class="source-desc">Every Monday morning</div></div><label class="toggle"><input type="checkbox" /><span class="toggle-slider"></span></label></div>
+              </div>
+            </div>
+          </div>
+          <!-- API -->
+          <div class="settings-section" id="settings-api">
+            <div class="form-card">
+              <div class="form-card-title">API Keys</div>
+              <p style="font-size:13px;color:var(--muted);margin-bottom:16px">These are used by the AI pipeline. Leave blank to use the default subscription backend.</p>
+              <div class="form-group"><label>Anthropic API Key (optional)</label><input type="password" placeholder="sk-ant-…" /></div>
+              <div class="form-group"><label>OpenAI API Key (optional)</label><input type="password" placeholder="sk-…" /></div>
+              <button class="btn btn-primary" style="margin-top:8px">Save keys</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- ── JOB DETAIL PANEL ── -->
+<div class="detail-panel" id="detail-panel">
+  <div class="panel-header">
+    <div style="flex:1">
+      <div class="panel-title" id="panel-title">Solutions Engineer</div>
+      <div class="panel-company" id="panel-company">DigitalGenius · Remote</div>
+    </div>
+    <div class="score-circle" id="panel-score-circle" style="--pct:89">
+      <div class="score-inner"><div class="score-num" id="panel-score-num">89</div><div class="score-lbl">SCORE</div></div>
+    </div>
+    <button class="panel-close" onclick="closePanel()">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="panel-meta">
+      <div class="meta-chip" id="pm-mode">Remote</div>
+      <div class="meta-chip" id="pm-salary">28,000 PLN/mo</div>
+      <div class="meta-chip" id="pm-traj">Step up ↑</div>
+      <div class="meta-chip" id="pm-priority">HIGH priority</div>
+    </div>
+
+    <div class="section-lbl">Scoring breakdown</div>
+    <div class="dim-rows">
+      <div class="dim-row"><div class="dim-name">Technical alignment</div><div class="dim-bar-bg"><div class="dim-bar-fill" id="d1" style="width:80%"></div></div><div class="dim-score">32/40</div></div>
+      <div class="dim-row"><div class="dim-name">Role responsibilities</div><div class="dim-bar-bg"><div class="dim-bar-fill" id="d2" style="width:91%"></div></div><div class="dim-score">32/35</div></div>
+      <div class="dim-row"><div class="dim-name">Domain fit</div><div class="dim-bar-bg"><div class="dim-bar-fill" id="d3" style="width:87%"></div></div><div class="dim-score">13/15</div></div>
+      <div class="dim-row"><div class="dim-name">Leadership context</div><div class="dim-bar-bg"><div class="dim-bar-fill" id="d4" style="width:80%"></div></div><div class="dim-score">8/10</div></div>
+    </div>
+
+    <div class="section-lbl">Green flags</div>
+    <div id="panel-green">
+      <div class="flag"><span class="flag-icon" style="color:var(--green)">✓</span> AI-powered product — adjacent to Luigi's Box domain</div>
+      <div class="flag"><span class="flag-icon" style="color:var(--green)">✓</span> Remote-first culture, Poland-based team</div>
+      <div class="flag"><span class="flag-icon" style="color:var(--green)">✓</span> Strong API integration focus</div>
+    </div>
+
+    <div class="section-lbl">Warnings</div>
+    <div id="panel-warnings">
+      <div class="flag"><span class="flag-icon" style="color:var(--yellow)">⚠</span> Salary listed as "competitive" — verify before applying</div>
+    </div>
+
+    <div class="section-lbl">ATS Keywords</div>
+    <div class="tag-list" id="panel-tags">
+      <div class="tag">Solutions Engineer</div><div class="tag">API integration</div>
+      <div class="tag">SaaS onboarding</div><div class="tag">Customer success</div>
+      <div class="tag">REST APIs</div><div class="tag">Technical support</div>
+      <div class="tag">B2B enterprise</div>
+    </div>
+
+    <div class="section-lbl">Key talking points</div>
+    <div id="panel-points">
+      <div class="flag"><span class="flag-icon">•</span> Zero churn record maps directly onto their integration reliability requirement</div>
+      <div class="flag"><span class="flag-icon">•</span> RapidAPI background demonstrates developer-facing platform fluency</div>
+      <div class="flag"><span class="flag-icon">•</span> 100% B2B migration success at Flexiroam is directly comparable</div>
+    </div>
+  </div>
+  <div class="panel-actions">
+    <button class="btn btn-success btn-lg" onclick="closePanel()">✓ Prepare CV & letter</button>
+    <button class="btn btn-outline btn-lg" onclick="closePanel()">Skip</button>
+  </div>
+</div>
+
+<script>
+  // ── Navigation ──────────────────────────────────────────────
+  function go(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    if (['dashboard','jobs','search','resume','profile','settings'].includes(page)) {
+      document.getElementById('page-app').classList.add('active');
+      showApp(page);
+    } else {
+      document.getElementById('page-' + page).classList.add('active');
+    }
+  }
+
+  function showApp(section) {
+    document.querySelectorAll('.app-section').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    const el = document.getElementById('app-' + section);
+    if (el) el.style.display = 'block';
+    const nav = document.getElementById('nav-' + section);
+    if (nav) nav.classList.add('active');
+  }
+
+  // init app sections
+  document.querySelectorAll('.app-section').forEach((s,i) => { s.style.display = i===0?'block':'none'; });
+
+  // ── Detail panel ────────────────────────────────────────────
+  const panels = {
+    dg: { title:'Solutions Engineer', company:'DigitalGenius · Remote', score:89, mode:'Remote', salary:'28,000 PLN/mo', traj:'Step up ↑', prio:'HIGH priority' },
+    ol: { title:'Technical Consultant (SaaS)', company:'Open Loyalty · Remote', score:83, mode:'Remote', salary:'Not listed', traj:'Lateral →', prio:'HIGH priority' },
+  };
+  function openPanel(id) {
+    const d = panels[id] || panels.dg;
+    document.getElementById('panel-title').textContent   = d.title;
+    document.getElementById('panel-company').textContent = d.company;
+    document.getElementById('panel-score-num').textContent = d.score;
+    document.getElementById('panel-score-circle').style.setProperty('--pct', d.score);
+    document.getElementById('pm-mode').textContent   = d.mode;
+    document.getElementById('pm-salary').textContent = d.salary;
+    document.getElementById('pm-traj').textContent   = d.traj;
+    document.getElementById('pm-priority').textContent = d.prio;
+    document.getElementById('detail-panel').classList.add('open');
+  }
+  function closePanel() { document.getElementById('detail-panel').classList.remove('open'); }
+
+  // ── Settings tabs ────────────────────────────────────────────
+  function showSettings(id, el) {
+    document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.settings-nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('settings-' + id).classList.add('active');
+    el.classList.add('active');
+  }
+
+  // ── Tag input ────────────────────────────────────────────────
+  function addTag(e, wrapId) {
+    if (e.key !== 'Enter') return;
+    const wrap = document.getElementById(wrapId);
+    const input = wrap.querySelector('input');
+    const val = input.value.trim();
+    if (!val) return;
+    const tag = document.createElement('div');
+    tag.className = 'tag-editable';
+    tag.innerHTML = val + '<button onclick="removeTag(this)">×</button>';
+    wrap.insertBefore(tag, input);
+    input.value = '';
+    e.preventDefault();
+  }
+  function removeTag(btn) { btn.parentElement.remove(); }
+
+  // ── Run simulation ───────────────────────────────────────────
+  const logLines = [
+    ['info','Scout — crawling job boards…'],
+    ['ok','Scout complete — 47 listings found'],
+    ['info','Tracker: 12 new, 35 already reviewed — skipping'],
+    ['info','Phase 1 — Analysing 12 jobs'],
+    ['ok','[1/12] Solutions Engineer @ Accenture — score 71'],
+    ['ok','[2/12] Technical Account Manager @ Stripe — score 88'],
+    ['info','[3/12] Sales Engineer @ Oracle — score 44 (below threshold)'],
+    ['ok','[4/12] Integration Engineer @ Twilio — score 82'],
+    ['err','[5/12] Analyst error — retrying…'],
+    ['ok','[5/12] Integration Specialist @ Contentful — score 77'],
+    ['ok','Phase 1 complete — 4 passed, 6 filtered, 1 error'],
+    ['ok','Pipeline complete.'],
+  ];
+  let runInterval = null;
+  function startRun() {
+    document.getElementById('run-log-card').style.display = 'block';
+    const logBox = document.getElementById('log-box');
+    const bar = document.getElementById('run-bar');
+    const pct = document.getElementById('run-pct');
+    const phase = document.getElementById('run-phase');
+    logBox.innerHTML = '';
+    let i = 0;
+    if (runInterval) clearInterval(runInterval);
+    runInterval = setInterval(() => {
+      if (i >= logLines.length) { clearInterval(runInterval); return; }
+      const [type, msg] = logLines[i];
+      const div = document.createElement('div');
+      div.className = 'log-line';
+      const now = new Date().toTimeString().slice(0,8);
+      const cls = type === 'ok' ? 'ok' : type === 'err' ? 'err' : 'info';
+      div.innerHTML = `<span class="ts">${now}</span> <span class="${cls}">${type.toUpperCase().padEnd(5)}</span> ${msg}`;
+      logBox.appendChild(div);
+      logBox.scrollTop = logBox.scrollHeight;
+      const p = Math.round(((i+1)/logLines.length)*100);
+      bar.style.width = p + '%';
+      pct.textContent = p + '%';
+      phase.textContent = i < 3 ? 'Scout' : i < 10 ? 'Analyst' : 'Complete';
+      i++;
+    }, 900);
+  }
+</script>
+</body>
+</html>

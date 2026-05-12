@@ -2,10 +2,10 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "Job Agent Pipeline",
+      "name": "design",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["job_agent/orchestrator.py"],
-      "port": null
+      "runtimeArgs": ["-m", "http.server", "7891", "--directory", "design"],
+      "port": 7891
     }
   ]
 }
